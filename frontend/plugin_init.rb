@@ -10,17 +10,24 @@ Rails.application.config.after_initialize do
   end
 
 
-  # ApplicationHelper.class_eval do
-  #   alias_method :render_aspace_partial_pre_search_cart, :render_aspace_partial
-  #   def render_aspace_partial(args)
-  #     result = render_aspace_partial_pre_search_cart(args);
-  #
-  #     if args[:partial] == "shared/pagination_summary"
-  #       result += render args.merge(:partial => "cart/templates")
-  #     end
-  #
-  #     result
-  #   end
-  # end
+  ActionView::PartialRenderer.class_eval do
+     # module ClassMethods
+        alias_method :render_pre_search_cart, :render
+        def render(context, options, block)
+          p "**"
+          p options
+
+          result = render_pre_search_cart(context, options, block);
+
+          # Add our cart-specific templates to shared/templates
+          if options[:partial] == "shared/templates"
+            result += render(context, options.merge(:partial => "search/cart"), nil)
+          end
+
+          result
+        end
+    #  end
+    # end
+  end
 
 end

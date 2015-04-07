@@ -1,0 +1,65 @@
+<div id="template_cart_toolbar_action"><!--
+  <li id="cart">
+    <div class="btn-group">
+      <button class="btn btn-default navbar-btn show-cart-btn">
+        <span class="glyphicon glyphicon-shopping-cart"></span>
+        <span class="badge cart-count"></span>
+      </button>
+
+    </div>
+  </li>
+--></div>
+
+<div id="template_cart_dialog_title"><!--
+  <%= I18n.t("cart.cart_dialog_title") %>
+--></div>
+
+<!-- <p>
+
+    </p>-->
+
+<div id="template_cart_dialog_contents"><!--
+  <div class="cart-preview">
+    <table class="table table table-striped table-bordered table-condensed table-hover token-list">
+      <thead>
+        <tr>
+          <th></th>
+          <th>
+            <button class="btn btn-xs btn-warning clear-cart-btn pull-right"><%= I18n.t("cart.cart_clear_selection_button") %></button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+    {for record in selected}
+      <tr data-uri="${record.uri}">
+        <td>
+          <div class="${record.record_type}">
+            <span class="icon-token"></span> ${record.display_string}
+          </div>
+        </td>
+        <td>
+          <button class="btn btn-xs btn-warning remove-from-cart-btn pull-right"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
+        </td>
+      </tr>
+    {/for}
+      </tbody>
+    </table>
+  </div>
+--></div>
+
+<div id="template_cart_dialog_footer"><!--
+<div class="modal-footer">
+  <button class="btn btn-default pull-right" data-dismiss="modal"><%= I18n.t("actions.close") %></button>
+</div>
+--></div>
+
+<div id="template_cart_actions"><!--
+  <button class="btn btn-xs btn-info add-to-cart-btn"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.add_action") %></button>
+  <button class="btn btn-xs btn-warning remove-from-cart-btn hide"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
+--></div>
+
+<% if current_user %>
+<script>
+  var CURRENT_REPO_URI = '<%= current_repo.uri %>'
+</script>
+<% end %>

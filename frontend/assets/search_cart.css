@@ -1,5 +1,18 @@
-.cart-preview ul {
+#cart {
+  margin-right: 10px;
+}
+
+.cart-preview .icon-token {
   margin: 0;
-  padding: 0;
-  list-style: none;
+  width: 20px;
+}
+
+table .table-record-actions .btn-group {
+  float: none;
+}
+
+.table-record-actions .add-to-cart-btn,
+.table-record-actions .remove-from-cart-btn {
+  margin-top: 4px;
+  width: 100%;
 }
