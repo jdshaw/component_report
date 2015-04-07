@@ -1,0 +1,6 @@
+en:
+  pagination:
+    summary_cart_prefix: ", "
+    summary_cart_suffix: Selected
+    cart_dialog_title: Current Selection
+    cart_clear_selection_button: Clear Selection
