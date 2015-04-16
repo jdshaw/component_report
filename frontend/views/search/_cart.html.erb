@@ -5,51 +5,62 @@
         <span class="glyphicon glyphicon-shopping-cart"></span>
         <span class="badge cart-count"></span>
       </button>
-
+      <div class=btn-group>
+        <button class="btn btn-default navbar-btn dropdown-toggle" data-toggle="dropdown">
+          <span class="caret"></span>
+        </button>
+        <div id="cartSummaryDropdownPanel" class="dropdown-menu pull-right">
+          <%= link_to I18n.t("cart.checkout"), {:controller => :cart, :action => :checkout}, {:class => "btn btn-primary"} %>
+        </div>
+      </div>
     </div>
   </li>
 --></div>
 
 <div id="template_cart_dialog_title"><!--
-  <%= I18n.t("cart.cart_dialog_title") %>
+  <%= I18n.t("cart.your_cart") %>
 --></div>
 
-<!-- <p>
-
-    </p>-->
-
 <div id="template_cart_dialog_contents"><!--
-  <div class="cart-preview">
-    <table class="table table table-striped table-bordered table-condensed table-hover token-list">
-      <thead>
-        <tr>
-          <th></th>
-          <th>
-            <button class="btn btn-xs btn-warning clear-cart-btn pull-right"><%= I18n.t("cart.cart_clear_selection_button") %></button>
-          </th>
+  {if ($.isEmptyObject(selected))}
+    <div class="alert alert-info">Cart is empty</div>
+  {else}
+    <div class="cart-preview">
+      <table class="table table table-striped table-bordered table-condensed table-hover token-list">
+        <tbody>
+      {for record in selected}
+        <tr data-uri="${record.uri}">
+          <td>
+            <div class="${record.record_type}">
+              <span class="icon-token"></span> ${record.display_string}
+            </div>
+            <div class="extra-context" style="display:none"></div>
+          </td>
+          <td>
+            <div class="btn-group pull-right">
+              {if record.record_type == 'archival_object'}
+              <button class="btn btn-xs btn-default expand-context-btn">
+                <span class="glyphicon glyphicon-screenshot"></span>
+              </button>
+              {/if}
+              <button class="btn btn-xs btn-warning remove-from-cart-btn">
+                <span class="glyphicon glyphicon-remove"></span>
+              </button>
+            </div>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-    {for record in selected}
-      <tr data-uri="${record.uri}">
-        <td>
-          <div class="${record.record_type}">
-            <span class="icon-token"></span> ${record.display_string}
-          </div>
-        </td>
-        <td>
-          <button class="btn btn-xs btn-warning remove-from-cart-btn pull-right"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
-        </td>
-      </tr>
-    {/for}
-      </tbody>
-    </table>
-  </div>
+      {/for}
+        </tbody>
+      </table>
+    </div>
+  {/if}
 --></div>
 
 <div id="template_cart_dialog_footer"><!--
 <div class="modal-footer">
+  <%= link_to I18n.t("cart.checkout"), {:controller => :cart, :action => :checkout}, {:class => "btn btn-primary pull-left"} %>
   <button class="btn btn-default pull-right" data-dismiss="modal"><%= I18n.t("actions.close") %></button>
+  <button class="btn btn-warning pull-right clear-cart-btn" data-dismiss="modal"><%= I18n.t("cart.cart_clear_selection_button")  %></button>
 </div>
 --></div>
 
@@ -58,7 +69,7 @@
   <button class="btn btn-xs btn-warning remove-from-cart-btn hide"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
 --></div>
 
-<% if current_user %>
+<% if current_user && current_repo %>
 <script>
   var CURRENT_REPO_URI = '<%= current_repo.uri %>'
 </script>
