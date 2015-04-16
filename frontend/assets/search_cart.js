@@ -31,22 +31,78 @@ Cart.prototype.setupCartEvents = function() {
           selected: self.data
         })
       }),
-      "container");
+      "full");
 
     $modal.find(".modal-footer").replaceWith(AS.renderTemplate("template_cart_dialog_footer"));
 
-    $modal.
-      on("click", ".clear-cart-btn", function() {
-        self.clearSelection();
-        location.reload();
-      }).
-      on("click", ".remove-from-cart-btn", function(event) {
-        var $tr = $(event.target).closest("tr");
-        self.removeFromSelection(($tr.data("uri")));
-        $tr.remove();
-      });
+    self.bindSummaryEvents($modal);
+  });
+
+  self.$cart.on("click", "#cartSummaryDropdownBtn", function(event) {
+    $("#cartSummaryDropdownPanel").find(".cart-summary").html(AS.renderTemplate("template_cart_dialog_contents", {
+      selected: self.data
+    }));
+
+    if ($.isEmptyObject(self.data)) {
+      $("#cartSummaryDropdownPanel").find("button").addClass("disabled").attr("disabed", "disabled");
+    } else {
+      $("#cartSummaryDropdownPanel").find("button").removeClass("disabled").removeAttr("disabed");
+    }
+  });
+
+  self.$cart.on("click", ".cart-summary button", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
   });
 };
+
+
+Cart.prototype.bindSummaryEvents = function($container) {
+  var self = this;
+
+  $container.
+    on("click", ".expand-context-btn", function(event) {
+      var $btn = $(event.target).closest(".btn");
+      var $tr = $btn.closest("tr");
+      var $context = $tr.find(".extra-context");
+
+      if ($btn.data("loaded")) {
+        $context.slideToggle();
+        $btn.toggleClass("active");
+        return;
+      }
+
+      $btn.attr("disabled", "disabled").addClass("disabled");
+
+      $.ajax({
+        url: "/plugins/search_cart/context",
+        type: "get",
+        data: {
+          uri: $tr.data("uri")
+        },
+        success: function(data) {
+          $tr.find(".extra-context").html(data).slideDown();
+
+          $btn.removeAttr("disabled").removeClass("disabled");
+
+          $btn.data("loaded", true).addClass("active");
+
+          $(window).trigger("resize");
+        }
+      });
+    }).
+    on("click", ".clear-cart-btn", function(event) {
+      self.clearSelection();
+    }).
+    on("click", ".remove-from-cart-btn", function(event) {
+      event.stopPropagation();
+
+      var $tr = $(event.target).closest("tr");
+      self.removeFromSelection(($tr.data("uri")));
+      $tr.remove();
+    });
+}
+
 
 Cart.prototype.clearSelection = function() {
   var self = this;
@@ -170,7 +226,7 @@ $(function() {
     return;
   }
 
-  new Cart(CURRENT_REPO_URI);
+  AS.Cart = new Cart(CURRENT_REPO_URI);
 });
 
 
@@ -186,77 +242,3 @@ AS.setData = function(key, mutator) {
 
   return updated;
 };
-
-
-//var init_search_cart = function() {
-//  var $table = $(this);
-//  /*if (AS.QueryString.hasOwnProperty("deleted_uri")) {
-//   $.each(AS.QueryString.deleted_uri, function(i, uri) {
-//   removeFromSelection(uri);
-//   });
-//   }*/
-//
-//
-//  $table.on("click", ".multiselect-column :input", function(event) {
-//    var $this = $(event.target);
-//    var $row = $this.closest("tr");
-//
-//    if ($row.hasClass("selected")) {
-//      addToSelection($this.val(), $row.data("display-string"), $row.data("record-type"));
-//    } else {
-//      removeFromSelection($this.val());
-//    }
-//
-//    updateSelectionSummary();
-//
-//    setTimeout(function() {
-//      if ($.isEmptyObject(multiselectData[pageKey])) {
-//        $table.trigger("multiselectempty.aspace");
-//      }
-//    });
-//  });
-//
-//  $(".multiselect-enabled").each(function() {
-//    var $multiselectAffectedWidget = $(this);
-//    if ($table.is($multiselectAffectedWidget.data("multiselect"))) {
-//      $table.on("multiselectselected.aspace", function() {
-//        $multiselectAffectedWidget.removeAttr("disabled");
-//        var selected_records = [];
-//        $.each(multiselectData[pageKey], function(uri) {
-//          selected_records.push(uri);
-//        });
-//        $multiselectAffectedWidget.data("form-data", {
-//          record_uris: selected_records
-//        });
-//      }).on("multiselectempty.aspace", function() {
-//        $multiselectAffectedWidget.attr("disabled", "disabled");
-//        $multiselectAffectedWidget.data("form-data", {});
-//      });
-//    }
-//  });
-//
-//  $("button.multiselect-enabled").on("confirmed.aspace", function() {
-//    clearSelection();
-//  });
-//  /*$(".search-filters #component_switch_link, .search-filters a").on("click", function() {
-//   clearSelection();
-//   });
-//   $(".search-filters form").on("submit", function() {
-//   clearSelection();
-//   });*/
-//
-//
-//  if ($.isEmptyObject(multiselectData[pageKey])) {
-//    $table.trigger("multiselectempty.aspace");
-//  } else {
-//    $.each(multiselectData[pageKey], function(uri, recordData) {
-//      $(".multiselect-column :input[value='"+uri+"']").prop("checked", "checked");
-//    });
-//    $table.trigger("multiselectselected.aspace");
-//  }
-//
-//  $(".multiselect-column :input:checked", $table).closest("tr").addClass("selected");
-//};
-//
-//$(".table-search-results[data-multiselect]").each(init_search_cart);
-//});

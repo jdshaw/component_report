@@ -1,0 +1,30 @@
+<% render_node = lambda do |node|%>
+  <% selected = @ao.uri == node['record_uri'] %>
+  <%
+     if !selected && node['children'].blank?
+       next
+     end
+  %>
+  <li>
+    <span class="tree-icon"></span>
+    <span class="asicon icon-<%= node['node_type'] %>"></span>
+    <% if selected %>
+      <strong><%= node['title'] %></strong>
+    <% else %>
+      <%= node['title'] %>
+
+      <% unless node['children'].blank? %>
+        <ul>
+          <% node['children'].each do |child| %>
+            <% render_node.call(child) %>
+          <% end %>
+        </ul>
+      <% end %>
+
+    <% end %>
+  </li>
+<% end %>
+
+<ul>
+  <% render_node.call(@tree) %>
+</ul>

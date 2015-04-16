@@ -1,6 +1,8 @@
 en:
   cart:
-    cart_dialog_title: Your Cart
-    cart_clear_selection_button: Empty Cart
+    your_cart: Your Cart
+    cart_clear_selection_button: Empty the Cart
     add_action: Add
     remove_action: Remove
+    checkout: Checkout
+    loading: Loading your cart...

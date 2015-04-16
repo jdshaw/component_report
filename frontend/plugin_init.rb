@@ -1,3 +1,6 @@
+my_routes = [File.join(File.dirname(__FILE__), "routes.rb")]
+ArchivesSpace::Application.config.paths['config/routes'].concat(my_routes)
+
 Rails.application.config.after_initialize do
 
 
@@ -11,23 +14,17 @@ Rails.application.config.after_initialize do
 
 
   ActionView::PartialRenderer.class_eval do
-     # module ClassMethods
-        alias_method :render_pre_search_cart, :render
-        def render(context, options, block)
-          p "**"
-          p options
+    alias_method :render_pre_search_cart, :render
+    def render(context, options, block)
+      result = render_pre_search_cart(context, options, block);
 
-          result = render_pre_search_cart(context, options, block);
+      # Add our cart-specific templates to shared/templates
+      if options[:partial] == "shared/templates"
+        result += render(context, options.merge(:partial => "search/cart"), nil)
+      end
 
-          # Add our cart-specific templates to shared/templates
-          if options[:partial] == "shared/templates"
-            result += render(context, options.merge(:partial => "search/cart"), nil)
-          end
-
-          result
-        end
-    #  end
-    # end
+      result
+    end
   end
 
 end
