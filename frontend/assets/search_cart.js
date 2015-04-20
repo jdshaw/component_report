@@ -4,10 +4,14 @@ function Cart(key) {
 
   var allData = AS.getData("cart") || {};
   this.data = allData[key] || {};
+'re'
+  // only allow these types to be added to the cart
+  this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
 
   this.setupCartEvents();
   this.updateSelectionSummary();
   this.setupSearchResultsActions();
+  this.setupTreePageActions();
 };
 
 Cart.prototype.createCartWidget = function() {
@@ -93,6 +97,7 @@ Cart.prototype.bindSummaryEvents = function($container) {
     }).
     on("click", ".clear-cart-btn", function(event) {
       self.clearSelection();
+      location.reload();
     }).
     on("click", ".remove-from-cart-btn", function(event) {
       event.stopPropagation();
@@ -163,6 +168,10 @@ Cart.prototype.removeFromSelection = function(uri) {
 Cart.prototype.addToSelection = function(uri, display_string, record_type) {
   var self = this;
 
+  if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES) < 0) {
+    return;
+  }
+
   self.data = AS.setData("cart", function(data) {
     if (data == null) {
       data = {};
@@ -181,12 +190,6 @@ Cart.prototype.addToSelection = function(uri, display_string, record_type) {
     return data;
   })[self.key];
 
-  if (self.$table && self.$table.length) {
-    var $tr = self.$table.find("[data-uri='"+uri+"']");
-    $tr.find(".add-to-cart-btn").addClass("hide");
-    $tr.find(".remove-from-cart-btn").removeClass("hide");
-  }
-
   self.updateSelectionSummary();
 };
 
@@ -196,20 +199,25 @@ Cart.prototype.setupSearchResultsActions = function() {
 
   self.$table = $(".table-search-results");
   var actions = AS.renderTemplate("template_cart_actions");
-  self.$table.find(".table-record-actions").append(actions);
 
-  $.each(self.data, function(uri, recordData) {
-    var $tr = $("tr[data-uri='" + uri + "']", self.$table);
-    if ($tr.length) {
-      $tr.find(".add-to-cart-btn").addClass("hide");
-      $tr.find(".remove-from-cart-btn").removeClass("hide");
+  self.$table.find("tr[data-uri]").each(function() {
+    var $tr = $(this);
+    if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
+      $tr.find(".table-record-actions").append(actions);
+
+      if (self.data.hasOwnProperty($tr.data("uri"))) {
+        $tr.find(".add-to-cart-btn").addClass("hide");
+        $tr.find(".remove-from-cart-btn").removeClass("hide");
+      }
     }
   });
 
   self.$table.
     on("click", ".add-to-cart-btn", function(event) {
       var $tr = $(event.target).closest("tr");
-      self.addToSelection($tr.data("uri"), $tr.data("display-string"), $tr.data("record-type"))
+      self.addToSelection($tr.data("uri"), $tr.data("display-string"), $tr.data("record-type"));
+      $tr.find(".add-to-cart-btn").addClass("hide");
+      $tr.find(".remove-from-cart-btn").removeClass("hide");
     }).
     on("click", ".remove-from-cart-btn", function(event) {
       var $tr = $(event.target).closest("tr");
@@ -218,6 +226,54 @@ Cart.prototype.setupSearchResultsActions = function() {
       $tr.find(".remove-from-cart-btn").addClass("hide");
     });
 
+};
+
+
+Cart.prototype.setupTreePageActions = function() {
+  var self = this;
+  var $tree = $("#archives_tree");
+  if (!AS.hasOwnProperty("tree_data") || $tree.data("root-node-type") != "resource") {
+    return;
+  }
+
+  function toggleCartActions(uri) {
+    if (self.data.hasOwnProperty(uri)) {
+      $toolbar.find(".add-to-cart-btn").addClass("hide");
+      $toolbar.find(".remove-from-cart-btn").removeClass("hide");
+    }
+  }
+
+  function setupTreeToolbar(event) {
+    var actions = AS.renderTemplate("template_cart_actions");
+    $toolbar.find(".btn-toolbar").append(actions);
+
+    var $node = $(".primary-selected", $tree);
+    toggleCartActions($node.data("uri"));
+  };
+
+  $tree.on("after_open.jstree loaded.jstree", function(event) {
+    setupTreeToolbar(event);
+  });
+  $(window).hashchange(function(event) {
+    setupTreeToolbar(event);
+  });
+
+  var $toolbar = $("#archives_tree_toolbar");
+
+  $toolbar.
+    on("click", ".add-to-cart-btn", function(event) {
+      var $node = $tree.find(".primary-selected");
+      var uri = $node.data("uri");
+
+      self.addToSelection($node.data("uri"), $node.find("> a").attr("title"), $node.attr("rel"));
+      toggleCartActions($node.data("uri"));
+    }).
+    on("click", ".remove-from-cart-btn", function(event) {
+      var $node = $tree.find(".primary-selected");
+      self.removeFromSelection($node.data("uri"))
+
+      toggleCartActions($node.data("uri"));
+    });
 };
 
 

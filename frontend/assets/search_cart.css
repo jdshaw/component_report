@@ -17,6 +17,11 @@ table .table-record-actions .btn-group {
   width: 100%;
 }
 
+#archives_tree_toolbar .add-to-cart-btn,
+#archives_tree_toolbar .remove-from-cart-btn {
+    float: right
+}
+
 #cartCheckoutPane #cartData {
     min-height: 200px;
 }
