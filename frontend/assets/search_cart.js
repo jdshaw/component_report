@@ -87,36 +87,6 @@ Cart.prototype.bindSummaryEvents = function($container) {
   var self = this;
 
   $container.
-    on("click", ".expand-context-btn", function(event) {
-      var $btn = $(event.target).closest(".btn");
-      var $tr = $btn.closest("tr");
-      var $context = $tr.find(".extra-context");
-
-      if ($btn.data("loaded")) {
-        $context.slideToggle();
-        $btn.toggleClass("active");
-        return;
-      }
-
-      $btn.attr("disabled", "disabled").addClass("disabled");
-
-      $.ajax({
-        url: "/plugins/search_cart/context",
-        type: "get",
-        data: {
-          uri: $tr.data("uri")
-        },
-        success: function(data) {
-          $tr.find(".extra-context").html(data).slideDown();
-
-          $btn.removeAttr("disabled").removeClass("disabled");
-
-          $btn.data("loaded", true).addClass("active");
-
-          $(window).trigger("resize");
-        }
-      });
-    }).
     on("click", ".clear-cart-btn", function(event) {
       self.clearSelection();
       location.reload();

@@ -6,3 +6,12 @@ en:
     remove_action: Remove
     checkout: Checkout
     loading: Loading your cart...
+    summary:
+      resource_id: Resource ID
+      resource_title: Resource Title
+      series_title: Series Title
+      box_number: "Box #"
+      box_title: Box Title
+      file_number: "File #"
+      file_component_title: File Component Title
+      item_component_title: Item Component Title

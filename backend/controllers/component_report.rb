@@ -1,6 +1,6 @@
 class ArchivesSpaceService < Sinatra::Base
 
-  Endpoint.post('/plugins/search_cart/repository/:repo_id/cart')
+  Endpoint.post('/plugins/component_report/repository/:repo_id/cart')
   .description("Return resolved JSON of the records in the cart")
   .params(["repo_id", :repo_id],
           ["uri", [String], "The uris of the records in the cart"])
