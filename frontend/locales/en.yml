@@ -6,6 +6,7 @@ en:
     remove_action: Remove
     checkout: Checkout
     loading: Loading your cart...
+    is_empty: Cart is empty
     summary:
       resource_id: Resource ID
       resource_title: Resource Title

@@ -23,7 +23,7 @@
 
 <div id="template_cart_dialog_contents"><!--
   {if ($.isEmptyObject(selected))}
-    <div class="alert alert-info">Cart is empty</div>
+    <div class="alert alert-info"><%= I18n.t("cart.is_empty") %></div>
   {else}
     <div id="cartCheckoutPane" data-load-url="<%= url_for :controller => :cart, :action => :summary %>">
       <div class="alert alert-info">

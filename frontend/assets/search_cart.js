@@ -143,7 +143,9 @@ Cart.prototype.removeFromSelection = function(uri) {
       data[self.key] = [];
     }
 
-    data[self.key] = data[self.key].splice(uri, 1);
+    if ($.inArray(uri, data[self.key]) >= 0) {
+      data[self.key].splice($.inArray(uri, data[self.key]), 1);
+    }
 
     return data;
   })[self.key] || [];
