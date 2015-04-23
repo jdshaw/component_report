@@ -1,38 +1,16 @@
 <%= setup_context(:title => I18n.t("cart.checkout")) %>
 
 <div id="cartCheckoutPane" class="row">
-  <div class="col-md-3">
-    <div class="as-nav-list affix" data-spy="affix">
-      <hr>
-
-      <fieldset>
-        <div class="form-group">
-          <label class="control-label">Report Format</label>
-          <select class="form-control" id="report_format" name="report_format">
-            <option>HTML</option>
-            <option>JSON</option>
-            <option>PDF</option>
-            <option>CSV</option>
-          </select>
-        </div>
-      </fieldset>
-
-      <hr>
-
-      <p>
-        <button id="generateReportFromCart" class="btn btn-primary">Generate Report</button>
-      </p>
-    </div>
-  </div>
-  <div class="col-md-9">
+  <div class="col-md-12">
     <div class="record-pane">
       <button class="btn btn-warning clear-cart-btn pull-right"><%= I18n.t("cart.cart_clear_selection_button") %></button>
+      <button id="generateReportFromCart" class="btn btn-primary pull-right">Generate Report</button>
 
       <h2><%= I18n.t("cart.your_cart") %></h2>
 
       <%= render_aspace_partial :partial => "shared/flash_messages" %>
 
-      <div id="cartData">
+      <div id="cartData" data-load-url="<%= url_for :controller => :cart, :action => :summary %>">
         <div class="alert alert-info">
           <%= I18n.t("cart.loading") %>
         </div>

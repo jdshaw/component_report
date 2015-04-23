@@ -4,7 +4,7 @@ function Cart(key) {
 
   var allData = AS.getData("cart") || {};
   this.data = allData[key] || {};
-'re'
+
   // only allow these types to be added to the cart
   this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
 
@@ -22,6 +22,24 @@ Cart.prototype.createCartWidget = function() {
   return $cart;
 };
 
+
+Cart.prototype.loadCart = function($container) {
+  var self = this;
+
+  var load_url = $container.data("load-url");
+
+  $.post(load_url, {uri: self.data}, function(html) {
+    $container.html(html);
+
+    self.bindSummaryEvents($container);
+  });
+
+  $container.on("click", ".clear-cart-btn", function() {
+    self.clearSelection();
+  });
+};
+
+
 Cart.prototype.setupCartEvents = function() {
   var self = this;
 
@@ -36,6 +54,10 @@ Cart.prototype.setupCartEvents = function() {
         })
       }),
       "full");
+
+    if ($modal.has("#cartCheckoutPane")) {
+      self.loadCart($("#cartCheckoutPane", $modal));
+    }
 
     $modal.find(".modal-footer").replaceWith(AS.renderTemplate("template_cart_dialog_footer"));
 
@@ -102,8 +124,9 @@ Cart.prototype.bindSummaryEvents = function($container) {
     on("click", ".remove-from-cart-btn", function(event) {
       event.stopPropagation();
 
-      var $tr = $(event.target).closest("tr");
-      self.removeFromSelection(($tr.data("uri")));
+      var $btn = $(event.target).closest(".btn");
+      var $tr = $btn.closest("tr");
+      self.removeFromSelection($btn.data("uri"));
       $tr.remove();
     });
 }
@@ -147,13 +170,13 @@ Cart.prototype.removeFromSelection = function(uri) {
       data = {};
     }
     if (!data.hasOwnProperty(self.key)) {
-      data[self.key] = {};
+      data[self.key] = [];
     }
 
-    delete data[self.key][uri];
+    data[self.key] = data[self.key].splice(uri, 1);
 
     return data;
-  })[self.key] || {};
+  })[self.key] || [];
 
   if (self.$table && self.$table.length) {
     var $tr = self.$table.find("[data-uri='"+uri+"']");
@@ -165,7 +188,7 @@ Cart.prototype.removeFromSelection = function(uri) {
 };
 
 
-Cart.prototype.addToSelection = function(uri, display_string, record_type) {
+Cart.prototype.addToSelection = function(uri, record_type) {
   var self = this;
 
   if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES) < 0) {
@@ -178,14 +201,12 @@ Cart.prototype.addToSelection = function(uri, display_string, record_type) {
     }
 
     if (!data.hasOwnProperty(self.key)) {
-      data[self.key] = {};
+      data[self.key] = [];
     }
 
-    data[self.key][uri] = {
-      uri: uri,
-      display_string: display_string,
-      record_type: record_type
-    };
+    if ($.inArray(uri, data[self.key]) < 0) {
+      data[self.key].push(uri);
+    }
 
     return data;
   })[self.key];
@@ -205,7 +226,7 @@ Cart.prototype.setupSearchResultsActions = function() {
     if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
       $tr.find(".table-record-actions").append(actions);
 
-      if (self.data.hasOwnProperty($tr.data("uri"))) {
+      if (self.isSelected($tr.data("uri"))) {
         $tr.find(".add-to-cart-btn").addClass("hide");
         $tr.find(".remove-from-cart-btn").removeClass("hide");
       }
@@ -215,7 +236,7 @@ Cart.prototype.setupSearchResultsActions = function() {
   self.$table.
     on("click", ".add-to-cart-btn", function(event) {
       var $tr = $(event.target).closest("tr");
-      self.addToSelection($tr.data("uri"), $tr.data("display-string"), $tr.data("record-type"));
+      self.addToSelection($tr.data("uri"), $tr.data("record-type"));
       $tr.find(".add-to-cart-btn").addClass("hide");
       $tr.find(".remove-from-cart-btn").removeClass("hide");
     }).
@@ -229,6 +250,11 @@ Cart.prototype.setupSearchResultsActions = function() {
 };
 
 
+Cart.prototype.isSelected = function(uri) {
+  return $.inArray(uri, this.data || []) >= 0;
+}
+
+
 Cart.prototype.setupTreePageActions = function() {
   var self = this;
   var $tree = $("#archives_tree");
@@ -237,18 +263,30 @@ Cart.prototype.setupTreePageActions = function() {
   }
 
   function toggleCartActions(uri) {
-    if (self.data.hasOwnProperty(uri)) {
+    if (self.isSelected(uri)) {
       $toolbar.find(".add-to-cart-btn").addClass("hide");
       $toolbar.find(".remove-from-cart-btn").removeClass("hide");
+    } else {
+      $toolbar.find(".add-to-cart-btn").removeClass("hide");
+      $toolbar.find(".remove-from-cart-btn").addClass("hide");
     }
   }
+
+  function uriForNode($node) {
+    if ($node.data("uri")) {
+      return $node.data("uri");
+    }
+    // Some nodes don't store the uri...
+    return CURRENT_REPO_URI + "/" + $node.attr("rel") + "s/" + $node.data("id");
+  };
 
   function setupTreeToolbar(event) {
     var actions = AS.renderTemplate("template_cart_actions");
     $toolbar.find(".btn-toolbar").append(actions);
 
     var $node = $(".primary-selected", $tree);
-    toggleCartActions($node.data("uri"));
+    var uri = uriForNode($node);
+    toggleCartActions(uri);
   };
 
   $tree.on("after_open.jstree loaded.jstree", function(event) {
@@ -263,16 +301,18 @@ Cart.prototype.setupTreePageActions = function() {
   $toolbar.
     on("click", ".add-to-cart-btn", function(event) {
       var $node = $tree.find(".primary-selected");
-      var uri = $node.data("uri");
+      var uri = uriForNode($node);
 
-      self.addToSelection($node.data("uri"), $node.find("> a").attr("title"), $node.attr("rel"));
-      toggleCartActions($node.data("uri"));
+      self.addToSelection(uri, $node.attr("rel"));
+      toggleCartActions(uri);
     }).
     on("click", ".remove-from-cart-btn", function(event) {
       var $node = $tree.find(".primary-selected");
-      self.removeFromSelection($node.data("uri"))
+      var uri = uriForNode($node);
 
-      toggleCartActions($node.data("uri"));
+      self.removeFromSelection(uri)
+
+      toggleCartActions(uri);
     });
 };
 

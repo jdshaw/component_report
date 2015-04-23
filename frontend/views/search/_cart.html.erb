@@ -25,33 +25,10 @@
   {if ($.isEmptyObject(selected))}
     <div class="alert alert-info">Cart is empty</div>
   {else}
-    <div class="cart-preview">
-      <table class="table table table-striped table-bordered table-condensed table-hover token-list">
-        <tbody>
-      {for record in selected}
-        <tr data-uri="${record.uri}">
-          <td>
-            <div class="${record.record_type}">
-              <span class="icon-token"></span> ${record.display_string}
-            </div>
-            <div class="extra-context" style="display:none"></div>
-          </td>
-          <td>
-            <div class="btn-group pull-right">
-              {if record.record_type == 'archival_object'}
-              <button class="btn btn-xs btn-default expand-context-btn">
-                <span class="glyphicon glyphicon-screenshot"></span>
-              </button>
-              {/if}
-              <button class="btn btn-xs btn-warning remove-from-cart-btn">
-                <span class="glyphicon glyphicon-remove"></span>
-              </button>
-            </div>
-          </td>
-        </tr>
-      {/for}
-        </tbody>
-      </table>
+    <div id="cartCheckoutPane" data-load-url="<%= url_for :controller => :cart, :action => :summary %>">
+      <div class="alert alert-info">
+        <%= I18n.t("cart.loading") %>
+      </div>
     </div>
   {/if}
 --></div>

@@ -19,7 +19,8 @@ table .table-record-actions .btn-group {
 
 #archives_tree_toolbar .add-to-cart-btn,
 #archives_tree_toolbar .remove-from-cart-btn {
-    float: right
+    float: right;
+    margin-right: 10px;
 }
 
 #cartCheckoutPane #cartData {
@@ -35,7 +36,7 @@ table .table-record-actions .btn-group {
 }
 
 #generateReportFromCart {
-  width: 100%;
+  margin-right: 10px;
 }
 
 #cartCheckoutPane .as-nav-list {
