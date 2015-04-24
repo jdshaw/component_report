@@ -2,7 +2,9 @@ function Cart(key) {
   this.key = key;
   this.$cart = this.createCartWidget();
 
-  var allData = AS.getData("cart") || {};
+  this.STORAGE_KEY = "component_report"
+
+  var allData = AS.getData(this.STORAGE_KEY) || {};
   this.data = allData[key] || {};
 
   // only allow these types to be added to the cart
@@ -105,7 +107,7 @@ Cart.prototype.bindSummaryEvents = function($container) {
 Cart.prototype.clearSelection = function() {
   var self = this;
 
-  self.data = AS.setData("cart", function(data) {
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data) {
       delete data[self.key];
     }
@@ -135,7 +137,7 @@ Cart.prototype.updateSelectionSummary = function() {
 Cart.prototype.removeFromSelection = function(uri) {
   var self = this;
 
-  self.data = AS.setData("cart", function(data) {
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data == null) {
       data = {};
     }
@@ -167,7 +169,7 @@ Cart.prototype.addToSelection = function(uri, record_type) {
     return;
   }
 
-  self.data = AS.setData("cart", function(data) {
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data == null) {
       data = {};
     }

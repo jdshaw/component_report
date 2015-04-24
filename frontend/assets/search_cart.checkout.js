@@ -17,3 +17,11 @@ CartCheckout.prototype.loadCart = function() {
     alert("Next on the list!");
   });
 };
+
+$(function() {
+  if (typeof AS.Cart == "undefined") {
+    return;
+  }
+
+  new CartCheckout(AS.Cart, $("#cartCheckoutPane"), $("#cartData"));
+});
