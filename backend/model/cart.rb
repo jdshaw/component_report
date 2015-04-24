@@ -16,7 +16,9 @@ class Cart
 
   def build_cart_items
     @uris.each do | uri |
-      build_cart_item_for(uri)
+      if URIResolver.record_exists?(uri)
+        build_cart_item_for(uri)
+      end
     end
   end
 
