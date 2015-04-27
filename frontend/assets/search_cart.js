@@ -85,6 +85,7 @@ Cart.prototype.setupCartEvents = function() {
 
   self.$cart.on("click", ".clear-cart-btn", function() {
     self.clearSelection();
+    location.reload();
   });
 };
 
