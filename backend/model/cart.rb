@@ -7,8 +7,6 @@ class Cart
   def initialize(uris)
     @uris = uris
     @cart_items = []
-    @archival_objects = []
-    @resources = []
 
     build_cart_items
   end
@@ -28,10 +26,8 @@ class Cart
 
     parsed = JSONModel.parse_reference(uri)
     if parsed[:type] == "resource"
-      @resources << uri
       cart_item["resource"] = { "ref" => uri }
     elsif parsed[:type] == "archival_object"
-      @archival_objects << uri
       ancestors = calculate_archival_object_ancestors(uri, parsed[:id])
 
       ["resource","series", "box", "component"].zip(ancestors.reverse) do |level, uri|
@@ -52,11 +48,9 @@ class Cart
     while(ao.parent_id) do
       ao = ArchivalObject[ao.parent_id]
       ancestors.push(ao.uri)
-      @archival_objects << ao.uri
     end
     resource = Resource[ao.root_record_id]
     ancestors.push(resource.uri)
-    @resources << resource.uri
 
     ancestors
   end
