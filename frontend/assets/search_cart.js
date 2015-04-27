@@ -82,6 +82,10 @@ Cart.prototype.setupCartEvents = function() {
     event.preventDefault();
     event.stopPropagation();
   });
+
+  self.$cart.on("click", ".clear-cart-btn", function() {
+    self.clearSelection();
+  });
 };
 
 

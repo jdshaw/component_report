@@ -11,6 +11,8 @@
         </button>
         <div id="cartSummaryDropdownPanel" class="dropdown-menu pull-right">
           <%= link_to I18n.t("cart.checkout"), {:controller => :cart, :action => :checkout}, {:class => "btn btn-primary"} %>
+          <hr>
+          <%= link_to I18n.t("cart.cart_clear_selection_button"), "javascript:void(0)", {:class => "btn btn-sm btn-warning clear-cart-btn"} %>
         </div>
       </div>
     </div>
