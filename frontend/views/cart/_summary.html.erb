@@ -1,0 +1,53 @@
+<% if @cart_items.empty? %>
+  <div class="alert alert-info"><%= I18n.t("cart.is_empty") %></div>
+<% else %>
+  <table class="table table-striped table-bordered">
+    <thead>
+      <tr>
+        <th><%= I18n.t("cart.summary.resource_id") %></th>
+        <th><%= I18n.t("cart.summary.resource_title") %></th>
+        <th><%= I18n.t("cart.summary.series_title") %></th>
+        <th><%= I18n.t("cart.summary.box_number") %></th>
+        <th><%= I18n.t("cart.summary.box_title") %></th>
+        <th><%= I18n.t("cart.summary.file_number") %></th>
+        <th><%= I18n.t("cart.summary.file_component_title") %></th>
+        <th><%= I18n.t("cart.summary.item_component_title") %></th>
+        <th><!-- actions --></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @cart_items.each do |cart_item| %>
+        <tr>
+          <td><%= (0..3).map {|i| cart_item["resource"]["_resolved"]["id_#{i}"]}.compact.join(".") %></td>
+          <td><%= cart_item["resource"]["_resolved"]["title"] %></td>
+          <td><%= cart_item["series"]["_resolved"]["display_string"] rescue "" %></td>
+          <td><%= cart_item["box"]["_resolved"]["instances"].find{|instance| instance.has_key?("container")}["container"]["indicator_1"] rescue "" %></td>
+          <td><%= cart_item["box"]["_resolved"]["display_string"] rescue "" %></td>
+          <% begin %>
+            <% if ["file", "folder"].include?(cart_item["component"]["_resolved"]["level"]) %>
+              <td><%= cart_item["component"]["_resolved"]["instances"].find{|instance| instance.has_key?("container")}["container"]["indicator_1"] rescue "" %></td>
+              <td><%= cart_item["component"]["_resolved"]["display_string"] rescue "" %></td>
+              <td></td>
+            <% else %>
+              <td></td>
+              <td></td>
+              <td><%= cart_item["component"]["_resolved"]["display_string"] rescue "" %></td>
+            <% end %>
+           <% rescue %>
+            <td></td>
+            <td></td>
+            <td></td>
+           <% end %>
+          <td>
+            <div class="btn-group">
+              <a href="<%= url_for :controller => :resolver, :action => :resolve_readonly, :uri => cart_item["selected"]["ref"] %>" class="btn btn-xs btn-default">View</a>
+              <button class="btn btn-xs btn-warning remove-from-cart-btn" data-uri="<%= cart_item["selected"]["ref"] %>">
+                <span class="glyphicon glyphicon-remove"></span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

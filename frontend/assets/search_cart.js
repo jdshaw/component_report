@@ -2,12 +2,18 @@ function Cart(key) {
   this.key = key;
   this.$cart = this.createCartWidget();
 
-  var allData = AS.getData("cart") || {};
+  this.STORAGE_KEY = "component_report"
+
+  var allData = AS.getData(this.STORAGE_KEY) || {};
   this.data = allData[key] || {};
+
+  // only allow these types to be added to the cart
+  this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
 
   this.setupCartEvents();
   this.updateSelectionSummary();
   this.setupSearchResultsActions();
+  this.setupTreePageActions();
 };
 
 Cart.prototype.createCartWidget = function() {
@@ -17,6 +23,24 @@ Cart.prototype.createCartWidget = function() {
 
   return $cart;
 };
+
+
+Cart.prototype.loadCart = function($container) {
+  var self = this;
+
+  var load_url = $container.data("load-url");
+
+  $.post(load_url, {uri: self.data}, function(html) {
+    $container.html(html);
+
+    self.bindSummaryEvents($container);
+  });
+
+  $container.on("click", ".clear-cart-btn", function() {
+    self.clearSelection();
+  });
+};
+
 
 Cart.prototype.setupCartEvents = function() {
   var self = this;
@@ -32,6 +56,10 @@ Cart.prototype.setupCartEvents = function() {
         })
       }),
       "full");
+
+    if ($modal.has("#cartCheckoutPane")) {
+      self.loadCart($("#cartCheckoutPane", $modal));
+    }
 
     $modal.find(".modal-footer").replaceWith(AS.renderTemplate("template_cart_dialog_footer"));
 
@@ -54,6 +82,11 @@ Cart.prototype.setupCartEvents = function() {
     event.preventDefault();
     event.stopPropagation();
   });
+
+  self.$cart.on("click", ".clear-cart-btn", function() {
+    self.clearSelection();
+    location.reload();
+  });
 };
 
 
@@ -61,44 +94,16 @@ Cart.prototype.bindSummaryEvents = function($container) {
   var self = this;
 
   $container.
-    on("click", ".expand-context-btn", function(event) {
-      var $btn = $(event.target).closest(".btn");
-      var $tr = $btn.closest("tr");
-      var $context = $tr.find(".extra-context");
-
-      if ($btn.data("loaded")) {
-        $context.slideToggle();
-        $btn.toggleClass("active");
-        return;
-      }
-
-      $btn.attr("disabled", "disabled").addClass("disabled");
-
-      $.ajax({
-        url: "/plugins/search_cart/context",
-        type: "get",
-        data: {
-          uri: $tr.data("uri")
-        },
-        success: function(data) {
-          $tr.find(".extra-context").html(data).slideDown();
-
-          $btn.removeAttr("disabled").removeClass("disabled");
-
-          $btn.data("loaded", true).addClass("active");
-
-          $(window).trigger("resize");
-        }
-      });
-    }).
     on("click", ".clear-cart-btn", function(event) {
       self.clearSelection();
+      location.reload();
     }).
     on("click", ".remove-from-cart-btn", function(event) {
       event.stopPropagation();
 
-      var $tr = $(event.target).closest("tr");
-      self.removeFromSelection(($tr.data("uri")));
+      var $btn = $(event.target).closest(".btn");
+      var $tr = $btn.closest("tr");
+      self.removeFromSelection($btn.data("uri"));
       $tr.remove();
     });
 }
@@ -107,7 +112,7 @@ Cart.prototype.bindSummaryEvents = function($container) {
 Cart.prototype.clearSelection = function() {
   var self = this;
 
-  self.data = AS.setData("cart", function(data) {
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data) {
       delete data[self.key];
     }
@@ -137,18 +142,20 @@ Cart.prototype.updateSelectionSummary = function() {
 Cart.prototype.removeFromSelection = function(uri) {
   var self = this;
 
-  self.data = AS.setData("cart", function(data) {
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data == null) {
       data = {};
     }
     if (!data.hasOwnProperty(self.key)) {
-      data[self.key] = {};
+      data[self.key] = [];
     }
 
-    delete data[self.key][uri];
+    if ($.inArray(uri, data[self.key]) >= 0) {
+      data[self.key].splice($.inArray(uri, data[self.key]), 1);
+    }
 
     return data;
-  })[self.key] || {};
+  })[self.key] || [];
 
   if (self.$table && self.$table.length) {
     var $tr = self.$table.find("[data-uri='"+uri+"']");
@@ -160,32 +167,28 @@ Cart.prototype.removeFromSelection = function(uri) {
 };
 
 
-Cart.prototype.addToSelection = function(uri, display_string, record_type) {
+Cart.prototype.addToSelection = function(uri, record_type) {
   var self = this;
 
-  self.data = AS.setData("cart", function(data) {
+  if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES) < 0) {
+    return;
+  }
+
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data == null) {
       data = {};
     }
 
     if (!data.hasOwnProperty(self.key)) {
-      data[self.key] = {};
+      data[self.key] = [];
     }
 
-    data[self.key][uri] = {
-      uri: uri,
-      display_string: display_string,
-      record_type: record_type
-    };
+    if ($.inArray(uri, data[self.key]) < 0) {
+      data[self.key].push(uri);
+    }
 
     return data;
   })[self.key];
-
-  if (self.$table && self.$table.length) {
-    var $tr = self.$table.find("[data-uri='"+uri+"']");
-    $tr.find(".add-to-cart-btn").addClass("hide");
-    $tr.find(".remove-from-cart-btn").removeClass("hide");
-  }
 
   self.updateSelectionSummary();
 };
@@ -196,20 +199,25 @@ Cart.prototype.setupSearchResultsActions = function() {
 
   self.$table = $(".table-search-results");
   var actions = AS.renderTemplate("template_cart_actions");
-  self.$table.find(".table-record-actions").append(actions);
 
-  $.each(self.data, function(uri, recordData) {
-    var $tr = $("tr[data-uri='" + uri + "']", self.$table);
-    if ($tr.length) {
-      $tr.find(".add-to-cart-btn").addClass("hide");
-      $tr.find(".remove-from-cart-btn").removeClass("hide");
+  self.$table.find("tr[data-uri]").each(function() {
+    var $tr = $(this);
+    if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
+      $tr.find(".table-record-actions").append(actions);
+
+      if (self.isSelected($tr.data("uri"))) {
+        $tr.find(".add-to-cart-btn").addClass("hide");
+        $tr.find(".remove-from-cart-btn").removeClass("hide");
+      }
     }
   });
 
   self.$table.
     on("click", ".add-to-cart-btn", function(event) {
       var $tr = $(event.target).closest("tr");
-      self.addToSelection($tr.data("uri"), $tr.data("display-string"), $tr.data("record-type"))
+      self.addToSelection($tr.data("uri"), $tr.data("record-type"));
+      $tr.find(".add-to-cart-btn").addClass("hide");
+      $tr.find(".remove-from-cart-btn").removeClass("hide");
     }).
     on("click", ".remove-from-cart-btn", function(event) {
       var $tr = $(event.target).closest("tr");
@@ -218,6 +226,73 @@ Cart.prototype.setupSearchResultsActions = function() {
       $tr.find(".remove-from-cart-btn").addClass("hide");
     });
 
+};
+
+
+Cart.prototype.isSelected = function(uri) {
+  return $.inArray(uri, this.data || []) >= 0;
+}
+
+
+Cart.prototype.setupTreePageActions = function() {
+  var self = this;
+  var $tree = $("#archives_tree");
+  if (!AS.hasOwnProperty("tree_data") || $tree.data("root-node-type") != "resource") {
+    return;
+  }
+
+  function toggleCartActions(uri) {
+    if (self.isSelected(uri)) {
+      $toolbar.find(".add-to-cart-btn").addClass("hide");
+      $toolbar.find(".remove-from-cart-btn").removeClass("hide");
+    } else {
+      $toolbar.find(".add-to-cart-btn").removeClass("hide");
+      $toolbar.find(".remove-from-cart-btn").addClass("hide");
+    }
+  }
+
+  function uriForNode($node) {
+    if ($node.data("uri")) {
+      return $node.data("uri");
+    }
+    // Some nodes don't store the uri...
+    return CURRENT_REPO_URI + "/" + $node.attr("rel") + "s/" + $node.data("id");
+  };
+
+  function setupTreeToolbar(event) {
+    var actions = AS.renderTemplate("template_cart_actions");
+    $toolbar.find(".btn-toolbar").append(actions);
+
+    var $node = $(".primary-selected", $tree);
+    var uri = uriForNode($node);
+    toggleCartActions(uri);
+  };
+
+  $tree.on("after_open.jstree loaded.jstree", function(event) {
+    setupTreeToolbar(event);
+  });
+  $(window).hashchange(function(event) {
+    setupTreeToolbar(event);
+  });
+
+  var $toolbar = $("#archives_tree_toolbar");
+
+  $toolbar.
+    on("click", ".add-to-cart-btn", function(event) {
+      var $node = $tree.find(".primary-selected");
+      var uri = uriForNode($node);
+
+      self.addToSelection(uri, $node.attr("rel"));
+      toggleCartActions(uri);
+    }).
+    on("click", ".remove-from-cart-btn", function(event) {
+      var $node = $tree.find(".primary-selected");
+      var uri = uriForNode($node);
+
+      self.removeFromSelection(uri)
+
+      toggleCartActions(uri);
+    });
 };
 
 

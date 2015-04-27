@@ -41,7 +41,7 @@
     <% @search_data['results'].each do |result| 
       deleted = (params.has_key?("deleted_uri") and Array(params["deleted_uri"]).include?(result["id"])) || false
     %>
-      <tr data-uri="<%= result["id"] %>" data-display-string="<%= result["title"] %>" data-record-type="<%= result["primary_type"] %>" class="<%= "deleted" if deleted %>">
+      <tr data-uri="<%= result["id"] %>" data-record-type="<%= result["primary_type"] %>" class="<%= "deleted" if deleted %>">
         <% if allow_multi_select? %>
           <td class="multiselect-column">
             <%= check_box_tag "multiselect-item", result["id"], false %>
