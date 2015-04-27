@@ -42,3 +42,9 @@ table .table-record-actions .btn-group {
 #cartCheckoutPane .as-nav-list {
   box-shadow: none;
 }
+#cartCheckoutPane table td:empty {
+  text-align: center;
+}
+#cartCheckoutPane table td:empty:before {
+  content: '-';
+}
