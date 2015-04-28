@@ -32,32 +32,42 @@ class CartController < ApplicationController
         post_with_stream_response("/plugins/component_report/repositories/#{session[:repo_id]}/report", "uri[]" => uris) do |report_response|
           response.headers['Content-Disposition'] = report_response['Content-Disposition']
           response.headers['Content-Type'] = report_response['Content-Type']
+          #response.headers['Content-Type'] = "text/html"
+          response.headers['Last-Modified'] = Time.now.to_s
+          response.headers['Cache-Control'] = 'no-cache'
+          response.headers['X-Content-Type-Options'] = 'nosniff'
+          #response.headers['Transfer-Encoding'] = 'chunked'
 
           queue << :ok
           report_response.read_body do |chunk|
-            p chunk
+            puts ""
+            p "++ PRODUCED: #{chunk}"
             queue << chunk
           end
         end
       rescue EOFError
-        p "rescue EOFError"
+        puts "!! RESCUE EOFError"
         p $!
         queue << :EOF
       rescue
-        p "rescue"
+        puts "!! RESCUE"
         p $!
         queue << {:error => $!.message}
       ensure
+        puts ""
+        p "++ PRODUCED: EOF"
         queue << :EOF
       end
     end
 
-    first_on_queue = queue.pop
+    first_on_queue = queue.pop # :ok or error hash
     if first_on_queue.kind_of?(Hash)
       @report_errors = first_on_queue[:error]
 
       return render :action => :checkout
     end
+
+    #self.response_body = QueueStreamer.new(queue)
 
     self.response_body = Class.new do
       def self.queue=(queue)
@@ -65,10 +75,15 @@ class CartController < ApplicationController
       end
       def self.each(&block)
         while(true)
-          elt = @queue.pop
+          chunk = @queue.pop
 
-          break if elt === :EOF
-          block.call(elt)
+          puts ""
+          p "-- CONSUMED: #{chunk}"
+
+          break if chunk === :EOF
+
+          block.call(chunk)
+          sleep(0.2)
         end
       end
     end
@@ -103,3 +118,24 @@ class CartController < ApplicationController
 
 end
 
+class QueueStreamer
+
+  def initialize(queue)
+    @queue = queue
+  end
+
+  def each(&block)
+    while(true)
+      chunk = @queue.pop
+
+      puts ""
+      p "-- CONSUMED: #{chunk}"
+
+      break if chunk === :EOF
+
+      block.call(chunk)
+      sleep(0.1)
+    end
+  end
+
+end
