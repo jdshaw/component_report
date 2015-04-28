@@ -9,7 +9,7 @@ class ArchivesSpaceService < Sinatra::Base
   do
     cart = Cart.new(params[:uri])
 
-    json_response(resolve_references(cart.cart_items, ["resource","series", "box", "component"]))
+    json_response(resolve_references(cart.cart_items, ["resource","series", "box", "file", "item"]))
   end
 
 end
