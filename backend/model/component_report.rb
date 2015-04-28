@@ -74,11 +74,11 @@ class ComponentReport
   end
 
   def to_stream
-    p "**********"
+    p "********** TESTING: Validate and serialize"
     p @p.validate
+    #@p.serialize 'testing.xlsx'
     p "**********"
-    @p.serialize 'testing.xlsx'
-    @p.to_stream(true)
+    @p.to_stream
   end
 
   private

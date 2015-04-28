@@ -13,26 +13,6 @@ class ArchivesSpaceService < Sinatra::Base
   end
 
 
-  Endpoint.get('/plugins/component_report/repositories/:repo_id/report')
-  .description("Return Excel formatted component report for record uris")
-  .params(["repo_id", :repo_id],
-          ["uri", [String], "The uris of the records in the cart"])
-  .permissions([])
-  .returns([200, "report"]) \
-  do
-    cart_resolved = resolve_references(Cart.new(params[:uri]).cart_items, ["resource","series", "box", "component"])
-
-    [
-      200,
-      {
-        "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition" => "attachment; filename=\"component_report.xlsx\""
-      },
-      ComponentReport.new(cart_resolved).to_stream
-    ]
-  end
-
-
   Endpoint.post('/plugins/component_report/repositories/:repo_id/report')
   .description("Return Excel formatted component report for record uris")
   .params(["repo_id", :repo_id],

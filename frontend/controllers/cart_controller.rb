@@ -21,29 +21,41 @@ class CartController < ApplicationController
 
   def download_report
     uris = ASUtils.as_array(params[:uri])
+
     queue = Queue.new
 
+    backend_session = JSONModel::HTTP::current_backend_session
+
     Thread.new do
+      JSONModel::HTTP::current_backend_session = backend_session
       begin
-        JSONModel::HTTP::stream("/plugins/component_report/repositories/#{session[:repo_id]}/report", "uri[]" => uris) do |report_response|
+        post_with_stream_response("/plugins/component_report/repositories/#{session[:repo_id]}/report", "uri[]" => uris) do |report_response|
           response.headers['Content-Disposition'] = report_response['Content-Disposition']
           response.headers['Content-Type'] = report_response['Content-Type']
+
           queue << :ok
           report_response.read_body do |chunk|
+            p chunk
             queue << chunk
           end
         end
+      rescue EOFError
+        p "rescue EOFError"
+        p $!
+        queue << :EOF
       rescue
-        queue << {:error => ASUtils.json_parse($!.message)}
+        p "rescue"
+        p $!
+        queue << {:error => $!.message}
       ensure
         queue << :EOF
       end
-
     end
 
     first_on_queue = queue.pop
     if first_on_queue.kind_of?(Hash)
       @report_errors = first_on_queue[:error]
+
       return render :action => :checkout
     end
 
@@ -54,6 +66,7 @@ class CartController < ApplicationController
       def self.each(&block)
         while(true)
           elt = @queue.pop
+
           break if elt === :EOF
           block.call(elt)
         end
@@ -64,77 +77,29 @@ class CartController < ApplicationController
   end
 
 
-  # def download_report
-  #   uris = ASUtils.as_array(params[:uri])
-  #
-  #   queue = Queue.new
-  #
-  #   #session = Thread.current[:backend_session]
-  #
-  #   #Thread.new do
-  #     begin
-  #       #Thread.current[:backend_session] = session
-  #       post_with_stream_response("/plugins/component_report/repositories/#{session[:repo_id]}/report", "uri[]" => uris) do |report_response|
-  #         response.headers['Content-Disposition'] = report_response['Content-Disposition']
-  #         response.headers['Content-Type'] = report_response['Content-Type']
-  #         queue << :ok
-  #         report_response.read_body do |chunk|
-  #           queue << chunk
-  #         end
-  #       end
-  #     rescue
-  #       queue << {:error => ASUtils.json_parse($!.message)}
-  #     ensure
-  #       queue << :EOF
-  #     end
-  #
-  #   #end
-  #
-  #   first_on_queue = queue.pop
-  #   if first_on_queue.kind_of?(Hash)
-  #     @report_errors = first_on_queue[:error]
-  #
-  #     return render :action => :checkout
-  #   end
-  #
-  #   self.response_body = Class.new do
-  #     def self.queue=(queue)
-  #       @queue = queue
-  #     end
-  #     def self.each(&block)
-  #       while(true)
-  #         elt = @queue.pop
-  #         break if elt === :EOF
-  #         block.call(elt)
-  #       end
-  #     end
-  #   end
-  #
-  #   self.response_body.queue = queue
-  # end
-  #
-  #
-  # private
-  #
-  # def post_with_stream_response(uri, params = {}, &block)
-  #   uri = URI("#{ JSONModel::backend_url}#{uri}")
-  #   uri.query = URI.encode_www_form(params)
-  #
-  #   req = Net::HTTP::Post.new(uri.request_uri)
-  #
-  #   req['X-ArchivesSpace-Session'] = JSONModel::HTTP::current_backend_session
-  #
-  #   Net::HTTP.start(uri.host, uri.port) do |http|
-  #     http.request(req, nil) do |response|
-  #       if response.code =~ /^4/
-  #         JSONModel::handle_error(ASUtils.json_parse(response.body))
-  #         raise response.body
-  #       end
-  #
-  #       block.call(response)
-  #     end
-  #   end
-  # end
+  private
+
+  def post_with_stream_response(uri, params = {}, &block)
+    uri = URI("#{ JSONModel::backend_url}#{uri}")
+    uri.query = URI.encode_www_form(params)
+
+    req = Net::HTTP::Post.new(uri.request_uri)
+
+    req['X-ArchivesSpace-Session'] = JSONModel::HTTP::current_backend_session
+
+    Net::HTTP.start(uri.host, uri.port) do |http|
+      http.request(req, nil) do |response|
+        if response.code =~ /^4/
+          JSONModel::handle_error(ASUtils.json_parse(response.body))
+          raise response.body
+        end
+
+        p response.to_hash
+
+        block.call(response)
+      end
+    end
+  end
 
 end
 
