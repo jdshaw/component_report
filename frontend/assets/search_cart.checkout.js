@@ -14,7 +14,7 @@ CartCheckout.prototype.loadCart = function() {
   this.cart.loadCart(this.$cartData);
 
   this.$container.on("click", "#generateReportFromCart", function() {
-    alert("Next on the list!");
+    $("#componentReportForm").trigger("submit");
   });
 };
 
