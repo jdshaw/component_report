@@ -39,6 +39,7 @@
             <td></td>
            <% end %>
           <td>
+            <%= hidden_field_tag "uri[]", cart_item["selected"]["ref"] %>
             <div class="btn-group">
               <a href="<%= url_for :controller => :resolver, :action => :resolve_readonly, :uri => cart_item["selected"]["ref"] %>" class="btn btn-xs btn-default">View</a>
               <button class="btn btn-xs btn-warning remove-from-cart-btn" data-uri="<%= cart_item["selected"]["ref"] %>">
