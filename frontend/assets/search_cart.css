@@ -48,3 +48,8 @@ table .table-record-actions .btn-group {
 #cartCheckoutPane table td:empty:before {
   content: '-';
 }
+
+#cartCheckoutPane table .component-report-summary-box-container,
+#cartCheckoutPane table .component-report-summary-file-container {
+  text-align: right;
+}

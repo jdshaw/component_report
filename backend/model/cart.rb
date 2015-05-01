@@ -30,7 +30,7 @@ class Cart
     elsif parsed[:type] == "archival_object"
       ancestors = calculate_archival_object_ancestors(uri, parsed[:id])
 
-      ["resource","series", "box", "component"].zip(ancestors.reverse) do |level, uri|
+      ["resource","series", "box", "file", "item"].zip(ancestors.reverse) do |level, uri|
         if uri
           cart_item[level] = { "ref" => uri }
         end
