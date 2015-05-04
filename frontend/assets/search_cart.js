@@ -260,11 +260,18 @@ Cart.prototype.setupTreePageActions = function() {
   };
 
   function setupTreeToolbar(event) {
+    var $node = $(".primary-selected", $tree);
+
+    if ($node.hasClass("new")) {
+      // nothing to do as item is new
+      return;
+    }
+
+    var uri = uriForNode($node);
+
     var actions = AS.renderTemplate("template_cart_actions");
     $toolbar.find(".btn-toolbar").append(actions);
 
-    var $node = $(".primary-selected", $tree);
-    var uri = uriForNode($node);
     toggleCartActions(uri);
   };
 
