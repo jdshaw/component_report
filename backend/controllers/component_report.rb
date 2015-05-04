@@ -20,7 +20,7 @@ class ArchivesSpaceService < Sinatra::Base
   .permissions([:view_repository])
   .returns([200, "report"]) \
   do
-    cart_resolved = resolve_references(Cart.new(params[:uri]).cart_items, ["resource","series", "box", "component"])
+    cart_resolved = resolve_references(Cart.new(params[:uri]).cart_items, ["resource","series", "box", "file", "item", "resource::linked_agents", "resource::container_locations", "box::container_locations"])
 
     [
       200,
