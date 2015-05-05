@@ -27,6 +27,7 @@
           <td class="component-report-summary-file-title"><%= cart_item["file"]["_resolved"]["display_string"] rescue "" %></td>
           <td class="component-report-summary-item-title"><%= cart_item["item"]["_resolved"]["display_string"] rescue "" %></td>
           <td class="component-report-summary-actions">
+            <%= hidden_field_tag "uri[]", cart_item["selected"]["ref"] %>
             <div class="btn-group">
               <a href="<%= url_for :controller => :resolver, :action => :resolve_readonly, :uri => cart_item["selected"]["ref"] %>" class="btn btn-xs btn-default">View</a>
               <button class="btn btn-xs btn-warning remove-from-cart-btn" data-uri="<%= cart_item["selected"]["ref"] %>">
