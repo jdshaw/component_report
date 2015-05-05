@@ -80,12 +80,6 @@ class ComponentReport
   end
 
   def to_stream
-    @resources_ws.to_xml_string
-    @series_ws.to_xml_string
-    @boxes_ws.to_xml_string
-    @files_ws.to_xml_string
-    @items_ws.to_xml_string
-
     #For testing, serialize report to a file
     #@p.serialize("testing.xlsx")
     @p.to_stream
