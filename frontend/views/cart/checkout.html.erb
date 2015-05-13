@@ -4,7 +4,10 @@
   <div class="col-md-12">
     <div class="record-pane">
       <button class="btn btn-warning clear-cart-btn pull-right"><%= I18n.t("cart.cart_clear_selection_button") %></button>
-      <button id="generateReportFromCart" class="btn btn-primary pull-right">Generate Report</button>
+      <button id="generateReportFromCart" class="btn btn-primary pull-right" disabled>
+        <span class="action-text"><%= I18n.t("cart.summary.generate_report") %></span>
+        <span class="loading-text" style="display: none"><%= I18n.t("cart.summary.generating_report") %></span>
+      </button>
 
       <h2><%= I18n.t("cart.checkout") %></h2>
 

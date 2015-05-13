@@ -1,6 +1,6 @@
 class CartController < ApplicationController
 
-  set_access_control  "view_repository" => [:checkout, :summary, :download_report]
+  set_access_control  "view_repository" => [:checkout, :summary, :download_report, :uris_for_search]
 
 
   def checkout
@@ -75,21 +75,33 @@ class CartController < ApplicationController
   end
 
 
+  def uris_for_search
+    criteria = params_for_backend_search
+
+    queries = advanced_search_queries.reject{|field| field["value"].nil? || field["value"] == ""}
+
+    if not queries.empty?
+      criteria["aq"] = AdvancedQueryBuilder.new(queries, :staff).build_query.to_json
+    end
+
+    render :json => JSONModel::HTTP::get_json("/plugins/component_report/repositories/#{session[:repo_id]}/uris_for_search", criteria)
+  end
+
   private
 
 
   def post_with_stream_response(uri, params = {}, &block)
     uri = URI("#{ JSONModel::backend_url}#{uri}")
-    uri.query = URI.encode_www_form(params)
 
     req = Net::HTTP::Post.new(uri.request_uri)
+    req.body = URI.encode_www_form(params)
 
     req['X-ArchivesSpace-Session'] = JSONModel::HTTP::current_backend_session
 
     Net::HTTP.start(uri.host, uri.port) do |http|
       http.request(req, nil) do |response|
         if response.code =~ /^4/
-          JSONModel::handle_error(ASUtils.json_parse(response.body))
+          #JSONModel::handle_error(ASUtils.json_parse(response.body))
           raise response.body
         end
 
