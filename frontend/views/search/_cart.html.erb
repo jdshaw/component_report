@@ -56,7 +56,7 @@
 
 <div id="template_cart_add_all_action"><!--
   <button class="btn btn-xs btn-info add-all-from-search-to-cart-btn">
-    <%= image_tag "images/btn-info-busy.gif", :class => "loading hide" %>
+    <%= image_tag "#{AppConfig[:frontend_prefix]}assets/images/btn-info-busy.gif", :class => "loading hide" %>
     <span class="glyphicon glyphicon-shopping-cart"></span>
     <span class="action-text"><%= I18n.t("cart.add_all_action") %></span>
     <span class="success-text hide"><%= I18n.t("cart.add_all_action_success") %></span>
