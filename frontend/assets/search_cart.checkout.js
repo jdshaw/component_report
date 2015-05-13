@@ -10,8 +10,9 @@ function CartCheckout(cart, $container, $cartData) {
 
 
 CartCheckout.prototype.loadCart = function() {
+  var self = this;
 
-  this.cart.loadCart(this.$cartData, function() {
+  self.cart.loadCart(self.$cartData, function() {
     $("#generateReportFromCart").prop("disabled", false);
   });
 
@@ -25,6 +26,11 @@ CartCheckout.prototype.loadCart = function() {
       $("#generateReportFromCart").find(".loading-text").hide();
       $("#generateReportFromCart").find(".action-text").show();
     }, 5000);
+  });
+
+  self.$container.on("click", ".clear-cart-btn", function() {
+    self.cart.clearSelection();
+    location.reload();
   });
 };
 

@@ -49,10 +49,6 @@ Cart.prototype.loadCart = function($container, onComplete) {
       onComplete();
     }
   });
-
-  $container.on("click", ".clear-cart-btn", function() {
-    self.clearSelection();
-  });
 };
 
 
