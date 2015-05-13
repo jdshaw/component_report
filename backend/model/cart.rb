@@ -5,7 +5,7 @@ class Cart
   attr_accessor :cart_items
 
   def initialize(uris)
-    @uris = uris
+    @uris = uris.take(self.class.limit)
     @cart_items = []
 
     build_cart_items
@@ -53,6 +53,10 @@ class Cart
     ancestors.push(resource.uri)
 
     ancestors
+  end
+
+  def self.limit
+    AppConfig.has_key?(:component_report_cart_limit) ? AppConfig[:component_report_cart_limit] : 1000
   end
 
 end

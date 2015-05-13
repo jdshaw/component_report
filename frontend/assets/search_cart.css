@@ -53,3 +53,10 @@ table .table-record-actions .btn-group {
 #cartCheckoutPane table .component-report-summary-file-container {
   text-align: right;
 }
+
+button.add-all-from-search-to-cart-btn {
+  position: absolute;
+  right: 35px;
+  top: 8px;
+  width: 100px;
+}

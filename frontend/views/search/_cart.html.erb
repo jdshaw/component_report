@@ -1,5 +1,11 @@
+<%
+  def search_page?
+    controller.controller_name == "search"
+  end
+%>
+
 <div id="template_cart_toolbar_action"><!--
-  <li id="cart">
+  <li id="cart" data-limit="<%= CartSettings.limit %>" data-is-search-page="<%= search_page? %>">
     <div class="btn-group">
       <button class="btn btn-default navbar-btn show-cart-btn">
         <span class="glyphicon glyphicon-shopping-cart"></span>
@@ -47,6 +53,16 @@
   <button class="btn btn-xs btn-info add-to-cart-btn"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.add_action") %></button>
   <button class="btn btn-xs btn-warning remove-from-cart-btn hide"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
 --></div>
+
+<div id="template_cart_add_all_action"><!--
+  <button class="btn btn-xs btn-info add-all-from-search-to-cart-btn">
+    <%= image_tag "images/btn-info-busy.gif", :class => "loading hide" %>
+    <span class="glyphicon glyphicon-shopping-cart"></span>
+    <span class="action-text"><%= I18n.t("cart.add_all_action") %></span>
+    <span class="success-text hide"><%= I18n.t("cart.add_all_action_success") %></span>
+  </button>
+--></div>
+
 
 <% if current_user && current_repo %>
 <script>

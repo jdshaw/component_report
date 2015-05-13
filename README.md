@@ -19,3 +19,13 @@ ArchivesSpace plugins directory.  For example:
 
      cd /path/to/your/archivesspace/plugins
      git clone https://github.com/hudmol/component_report.git component_report
+
+
+## Configuration
+
+### Cart size limit
+
+Use this configuration to modify the number of records allowed in the cart (the system default is `1000`):
+
+     AppConfig[:component_report_cart_limit] = 1000
+

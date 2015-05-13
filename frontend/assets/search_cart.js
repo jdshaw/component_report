@@ -2,10 +2,13 @@ function Cart(key) {
   this.key = key;
   this.$cart = this.createCartWidget();
 
+  this.LIMIT = this.$cart.data("limit");
+  this.IS_SEARCH_PAGE = this.$cart.data("is-search-page");
+
   this.STORAGE_KEY = "component_report"
 
   var allData = AS.getData(this.STORAGE_KEY) || {};
-  this.data = allData[key] || {};
+  this.data = allData[key] || [];
 
   // only allow these types to be added to the cart
   this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
@@ -13,6 +16,9 @@ function Cart(key) {
   this.setupCartEvents();
   this.updateSelectionSummary();
   this.setupSearchResultsActions();
+  if (this.IS_SEARCH_PAGE) {
+    this.setupAddAllFromSearchAction();
+  }
   this.setupTreePageActions();
 };
 
@@ -25,15 +31,23 @@ Cart.prototype.createCartWidget = function() {
 };
 
 
-Cart.prototype.loadCart = function($container) {
+Cart.prototype.loadCart = function($container, onComplete) {
   var self = this;
 
   var load_url = $container.data("load-url");
+
+  if (typeof load_url == "undefined") {
+    return;
+  }
 
   $.post(load_url, {uri: self.data}, function(html) {
     $container.html(html);
 
     self.bindSummaryEvents($container);
+
+    if (onComplete) {
+      onComplete();
+    }
   });
 
   $container.on("click", ".clear-cart-btn", function() {
@@ -106,6 +120,9 @@ Cart.prototype.bindSummaryEvents = function($container) {
       self.removeFromSelection($btn.data("uri"));
       $tr.remove();
     });
+
+  // trigger a resize so the modal resizes to fit the container size
+  $(window).trigger("resize");
 }
 
 
@@ -129,12 +146,18 @@ Cart.prototype.updateSelectionSummary = function() {
 
   if ($.isEmptyObject(self.data)) {
     self.$cart.find(".cart-count").html("0");
+    self.cartIsNoLongerFull();
   } else {
     var size = 0;
     for (var _ in self.data) {
       size++
     }
     self.$cart.find(".cart-count").html(size).removeClass("hide");
+    if (size >= self.LIMIT) {
+      self.raiseCartIsFull();
+    } else {
+      self.cartIsNoLongerFull();
+    }
   }
 };
 
@@ -167,12 +190,8 @@ Cart.prototype.removeFromSelection = function(uri) {
 };
 
 
-Cart.prototype.addToSelection = function(uri, record_type) {
+Cart.prototype.addURItoCartData = function(uri) {
   var self = this;
-
-  if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES) < 0) {
-    return;
-  }
 
   self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data == null) {
@@ -189,7 +208,17 @@ Cart.prototype.addToSelection = function(uri, record_type) {
 
     return data;
   })[self.key];
+};
 
+
+Cart.prototype.addToSelection = function(uri, record_type) {
+  var self = this;
+
+  if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES) < 0) {
+    return;
+  }
+
+  self.addURItoCartData(uri);
   self.updateSelectionSummary();
 };
 
@@ -300,6 +329,65 @@ Cart.prototype.setupTreePageActions = function() {
 
       toggleCartActions(uri);
     });
+};
+
+
+Cart.prototype.addAllToSelection = function(uris) {
+  var self = this;
+
+  var newData = $.unique([].concat(self.data.concat(uris)));
+
+  if (newData.length > self.LIMIT) {
+    // raise too big! and slice to LIMIT
+    newData = newData.slice(0, self.LIMIT);
+  }
+
+  self.data = AS.setData(self.STORAGE_KEY, function(data) {
+    if (data == null) {
+      data = {};
+    }
+
+    data[self.key] = newData;
+
+    return data;
+  })[self.key];
+
+  self.updateSelectionSummary();
+};
+
+
+Cart.prototype.setupAddAllFromSearchAction = function() {
+  var self = this;
+  var $searchTable = $("#tabledSearchResults");
+
+  if ($searchTable.length == 0) {
+    // no search results on this page
+    return;
+  }
+
+  var $action = $(AS.renderTemplate("template_cart_add_all_action"));
+  $searchTable.before($action);
+
+  $action.click(function() {
+    $action.find(".loading").removeClass("hide");
+    $action.prop("disabled", "disabled");
+    $.getJSON("/plugins/component_report/uris_for_search" + location.search, function(json) {
+      self.addAllToSelection(json);
+      $action.find(".loading").remove();
+      $action.removeClass("btn-info").addClass("btn-success");
+      $action.find(".action-text").remove();
+      $action.find(".success-text").removeClass("hide");
+    });
+  });
+};
+
+
+Cart.prototype.raiseCartIsFull = function() {
+  this.$cart.find(".btn.show-cart-btn").addClass("btn-danger");
+};
+
+Cart.prototype.cartIsNoLongerFull = function() {
+  this.$cart.find(".btn.show-cart-btn.btn-danger").removeClass("btn-danger");
 };
 
 
