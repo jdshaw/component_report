@@ -25,6 +25,7 @@ class ComponentReport
     {:header => "Series Title",         :proc => Proc.new {|resource, series, box| record_title(series)}},
     {:header => "Series Dates",         :proc => Proc.new {|resource, series, box| record_dates(series)}},
     {:header => "Box Title",            :proc => Proc.new {|resource, series, box| record_title(box)}},
+    {:header => "Box Number",           :proc => Proc.new {|resource, series, box| box_number(box)}},
     {:header => "Box Dates",            :proc => Proc.new {|resource, series, box| record_dates(box)}},
     {:header => "Box Location",         :proc => Proc.new {|resource, series, box| box_locations(box)}},
     {:header => "Restrictions",         :proc => Proc.new {|resource, series, box| restrictions(resource, series, box)}},
@@ -37,6 +38,7 @@ class ComponentReport
     {:header => "Series Title",         :proc => Proc.new {|resource, series, box, file| record_title(series)}},
     {:header => "Series Dates",         :proc => Proc.new {|resource, series, box, file| record_dates(series)}},
     {:header => "Box Title",            :proc => Proc.new {|resource, series, box, file| record_title(box)}},
+    {:header => "Box Number",           :proc => Proc.new {|resource, series, box, file| box_number(box)}},
     {:header => "Box Dates",            :proc => Proc.new {|resource, series, box, file| record_dates(box)}},
     {:header => "Box Location",         :proc => Proc.new {|resource, series, box, file| box_locations(box)}},
     {:header => "File Title",           :proc => Proc.new {|resource, series, box, file| record_title(file)}},
@@ -52,6 +54,7 @@ class ComponentReport
     {:header => "Series Title",         :proc => Proc.new {|resource, series, box, file, item| record_title(series)}},
     {:header => "Series Dates",         :proc => Proc.new {|resource, series, box, file, item| record_dates(series)}},
     {:header => "Box Title",            :proc => Proc.new {|resource, series, box, file, item| record_title(box)}},
+    {:header => "Box Number",           :proc => Proc.new {|resource, series, box, file, item| box_number(box)}},
     {:header => "Box Dates",            :proc => Proc.new {|resource, series, box, file, item| record_dates(box)}},
     {:header => "Box Location",         :proc => Proc.new {|resource, series, box, file, item| box_locations(box)}},
     {:header => "File Title",           :proc => Proc.new {|resource, series, box, file, item| record_title(file)}},
@@ -255,5 +258,12 @@ class ComponentReport
     subnotes.map{|subnote|
       subnote['content']
     }.compact.join(NEWLINE)
+  end
+
+
+  def self.box_number(box)
+    first_container_instance = ASUtils.wrap(box["instances"]).find{|instance| instance.has_key?("container")}
+
+    first_container_instance ? first_container_instance["container"]["indicator_1"] : ""
   end
 end
