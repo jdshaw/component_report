@@ -331,7 +331,20 @@ Cart.prototype.setupTreePageActions = function() {
 Cart.prototype.addAllToSelection = function(uris) {
   var self = this;
 
-  var newData = $.unique([].concat(self.data.concat(uris)));
+  function uniquify(array) {
+    var tmp_hash = {}, result=[];
+    for(var i = 0; i < array.length; i++)
+    {
+      if (!tmp_hash[array[i]])
+      {
+        tmp_hash[array[i]] = true;
+        result.push(array[i]);
+      }
+    }
+    return result;
+  };
+
+  var newData = uniquify([].concat(self.data.concat(uris)));
 
   if (newData.length > self.LIMIT) {
     // raise too big! and slice to LIMIT
