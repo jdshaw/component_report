@@ -1,14 +1,19 @@
-function Cart(key) {
-  this.key = key;
+function Cart(primaryKey, secondaryKey) {
+  this.STORAGE_KEY = primaryKey;
+  this.key = secondaryKey;
   this.$cart = this.createCartWidget();
 
   this.LIMIT = this.$cart.data("limit");
   this.IS_SEARCH_PAGE = this.$cart.data("is-search-page");
 
-  this.STORAGE_KEY = "component_report"
-
-  var allData = AS.getData(this.STORAGE_KEY) || {};
-  this.data = allData[key] || [];
+  var allData = AS.getData(this.STORAGE_KEY);
+  if (allData == null) {
+    // remove any existing carts from the storage
+    // if user is new to this browser
+    AS.flushData();
+    allData = {};
+  }
+  this.data = allData[this.key] || [];
 
   // only allow these types to be added to the cart
   this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
@@ -401,11 +406,11 @@ Cart.prototype.cartIsNoLongerFull = function() {
 
 
 $(function() {
-  if (typeof CURRENT_REPO_URI == "undefined") {
+  if (typeof CURRENT_REPO_URI == "undefined" || typeof CURRENT_USER_HASH == "undefined" ) {
     return;
   }
 
-  AS.Cart = new Cart(CURRENT_REPO_URI);
+  AS.Cart = new Cart(CURRENT_USER_HASH, CURRENT_REPO_URI);
 });
 
 
@@ -420,4 +425,7 @@ AS.setData = function(key, mutator) {
   $.jStorage.set(key, updated);
 
   return updated;
+};
+AS.flushData = function() {
+  $.jStorage.flush();
 };
