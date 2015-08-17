@@ -297,6 +297,9 @@ Cart.prototype.setupTreePageActions = function() {
       return;
     }
 
+    // remove any existing cart buttons
+    $toolbar.find(".cart-btn").remove();
+
     var uri = uriForNode($node);
 
     var actions = AS.renderTemplate("template_cart_actions");
