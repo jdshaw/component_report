@@ -368,7 +368,11 @@ Cart.prototype.addAllToSelection = function(uris) {
   })[self.key];
 
   self.updateSelectionSummary();
-};
+
+  // toggle all cart buttons to be added
+  $(".add-to-cart-btn").addClass("hide");
+  $(".remove-from-cart-btn").removeClass("hide");
+}
 
 
 Cart.prototype.setupAddAllFromSearchAction = function() {
