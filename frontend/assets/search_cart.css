@@ -17,10 +17,9 @@ table .table-record-actions .btn-group {
   width: 100%;
 }
 
-#archives_tree_toolbar .add-to-cart-btn,
-#archives_tree_toolbar .remove-from-cart-btn {
+.archives-tree-container .cart-actions {
     float: right;
-    margin-right: 10px;
+    margin: 0 15px 0 5px;
 }
 
 #cartCheckoutPane #cartData {

@@ -267,17 +267,19 @@ Cart.prototype.isSelected = function(uri) {
 Cart.prototype.setupTreePageActions = function() {
   var self = this;
   var $tree = $("#archives_tree");
+  var $treeContainer = $tree.closest(".archives-tree-container");
+
   if (!AS.hasOwnProperty("tree_data") || $tree.data("root-node-type") != "resource") {
     return;
   }
 
   function toggleCartActions(uri) {
     if (self.isSelected(uri)) {
-      $toolbar.find(".add-to-cart-btn").addClass("hide");
-      $toolbar.find(".remove-from-cart-btn").removeClass("hide");
+      $treeContainer.find(".add-to-cart-btn").addClass("hide");
+      $treeContainer.find(".remove-from-cart-btn").removeClass("hide");
     } else {
-      $toolbar.find(".add-to-cart-btn").removeClass("hide");
-      $toolbar.find(".remove-from-cart-btn").addClass("hide");
+      $treeContainer.find(".add-to-cart-btn").removeClass("hide");
+      $treeContainer.find(".remove-from-cart-btn").addClass("hide");
     }
   }
 
@@ -298,26 +300,22 @@ Cart.prototype.setupTreePageActions = function() {
     }
 
     // remove any existing cart buttons
-    $toolbar.find(".cart-btn").remove();
+    $treeContainer.find(".cart-actions").remove();
 
     var uri = uriForNode($node);
 
     var actions = AS.renderTemplate("template_cart_actions");
-    $toolbar.find(".btn-toolbar").append(actions);
+    $treeContainer.prepend(actions);
 
     toggleCartActions(uri);
   };
 
-  $tree.on("after_open.jstree loaded.jstree", function(event) {
-    setupTreeToolbar(event);
-  });
-  $(window).hashchange(function(event) {
+
+  $tree.on("loaded.jstree select_node.jstree", function(event) {
     setupTreeToolbar(event);
   });
 
-  var $toolbar = $("#archives_tree_toolbar");
-
-  $toolbar.
+  $treeContainer.
     on("click", ".add-to-cart-btn", function(event) {
       var $node = $tree.find(".primary-selected");
       var uri = uriForNode($node);
