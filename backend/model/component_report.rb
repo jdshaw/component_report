@@ -41,6 +41,7 @@ class ComponentReport
     {:header => "Box Number",           :proc => Proc.new {|resource, series, box, file| box_number(box)}},
     {:header => "Box Dates",            :proc => Proc.new {|resource, series, box, file| record_dates(box)}},
     {:header => "Box Location",         :proc => Proc.new {|resource, series, box, file| box_locations(box)}},
+    {:header => "File Number",          :proc => Proc.new {|resource, series, box, file| file_number(file)}},
     {:header => "File Title",           :proc => Proc.new {|resource, series, box, file| record_title(file)}},
     {:header => "File Date",            :proc => Proc.new {|resource, series, box, file| record_dates(file)}},
     {:header => "File Scope/Content",   :proc => Proc.new {|resource, series, box, file| file_scope(file)}},
@@ -266,4 +267,11 @@ class ComponentReport
 
     first_container_instance ? first_container_instance["container"]["indicator_1"] : ""
   end
+  
+  def self.file_number(file)
+    first_container_instance = ASUtils.wrap(file["instances"]).find{|instance| instance.has_key?("container")}
+
+    first_container_instance ? first_container_instance["container"]["indicator_2"] : ""
+  end
+  
 end
