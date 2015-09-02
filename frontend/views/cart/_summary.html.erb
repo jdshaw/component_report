@@ -26,7 +26,7 @@
           <td class="component-report-summary-series-title"><%= cart_item["series"]["_resolved"]["display_string"] rescue "" %></td>
           <td class="component-report-summary-box-container"><%= cart_item["box"]["_resolved"]["instances"].find{|instance| instance.has_key?("container")}["container"]["indicator_1"] rescue "" %></td>
           <td class="component-report-summary-box-title"><%= cart_item["box"]["_resolved"]["display_string"] rescue "" %></td>
-          <td class="component-report-summary-file-container"><%= cart_item["file"]["_resolved"]["instances"].find{|instance| instance.has_key?("container")}["container"]["indicator_1"] rescue "" %></td>
+          <td class="component-report-summary-file-container"><%= cart_item["file"]["_resolved"]["instances"].find{|instance| instance.has_key?("container")}["container"]["indicator_2"] rescue "" %></td>
           <td class="component-report-summary-file-title"><%= cart_item["file"]["_resolved"]["display_string"] rescue "" %></td>
           <td class="component-report-summary-item-title"><%= cart_item["item"]["_resolved"]["display_string"] rescue "" %></td>
           <td class="component-report-summary-actions">
