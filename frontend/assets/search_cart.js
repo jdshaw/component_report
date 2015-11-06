@@ -8,15 +8,21 @@ function Cart(primaryKey, secondaryKey) {
 
   var allData = AS.getData(this.STORAGE_KEY);
   if (allData == null) {
-    // remove any existing carts from the storage
+    // remove any existing carts and child keys from the storage
     // if user is new to this browser
     AS.flushData();
+    for (var key in localStorage){
+   		if (key.substring(0, 16) == "as-cart-children") {
+   			localStorage.removeItem(key);
+   		}
+		}
     allData = {};
   }
   this.data = allData[this.key] || [];
 
   // only allow these types to be added to the cart
   this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
+	this.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN = ['archival_object'];
 
   this.setupCartEvents();
   this.updateSelectionSummary();
@@ -132,6 +138,12 @@ Cart.prototype.clearSelection = function() {
 
   self.data = AS.setData(self.STORAGE_KEY, function(data) {
     if (data) {
+      $.each(data[self.key], function (k,v) {
+      localStoreKey = "as-cart-children"+v;
+      	if (localStoreKey in localStorage) {
+      		localStorage.removeItem(localStoreKey);
+      	}
+      });
       delete data[self.key];
     }
 
@@ -211,6 +223,27 @@ Cart.prototype.addURItoCartData = function(uri) {
   })[self.key];
 };
 
+Cart.prototype.addURIChildrenToCartData = function(uri) {
+	var self = this;
+
+	var currentCartMax = self.LIMIT - self.$cart.find(".cart-count").html();
+	if (currentCartMax > 0) {
+			$.post("/plugins/component_report/children_uris_for_search", 
+				{uri:uri, cart_max: currentCartMax},
+				function (json) {
+					localStorage.setItem("as-cart-children"+uri,json);
+					
+					$.each(json, function(k,v){
+						self.addURItoCartData(v);
+					});
+					
+					self.updateSelectionSummary();
+					$(".cart-actions .btn-group button").removeAttr("disabled");
+					self.removeOverlay();
+				}
+			);
+		}
+};
 
 Cart.prototype.addToSelection = function(uri, record_type) {
   var self = this;
@@ -221,6 +254,31 @@ Cart.prototype.addToSelection = function(uri, record_type) {
 
   self.addURItoCartData(uri);
   self.updateSelectionSummary();
+};
+
+Cart.prototype.addWithChildrenToSelection = function (uri, record_type) {
+	var self = this;
+	
+	if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
+    return;
+  }
+  
+  self.addURItoCartData(uri);
+  self.updateSelectionSummary();
+  self.insertOverlay();
+	self.addURIChildrenToCartData(uri);
+};
+
+Cart.prototype.removeWithChildrenFromSelection = function (uri) {
+	var self = this;
+  
+  self.removeFromSelection(uri);
+  var localStoreKey = "as-cart-children"+uri;
+  var children = localStorage.getItem(localStoreKey).split(",");
+  $.each(children, function (k,v) {
+  	  self.removeFromSelection(v);
+  });
+  localStorage.removeItem(localStoreKey);
 };
 
 
@@ -234,10 +292,21 @@ Cart.prototype.setupSearchResultsActions = function() {
     var $tr = $(this);
     if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
       $tr.find(".table-record-actions").append(actions);
+			
+			if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
+				$tr.find(".add-to-cart-with-children, remove-from-cart-with-children").hide();
+				self.buttonGroupCSS();
+				self.hideChildrenAction();
+			}
 
       if (self.isSelected($tr.data("uri"))) {
         $tr.find(".add-to-cart-btn").addClass("hide");
         $tr.find(".remove-from-cart-btn").removeClass("hide");
+      }
+
+      if (localStorage["as-cart-children"+$tr.data("uri")]) {
+				$tr.find(".add-to-cart-with-children").addClass("hide");
+				$tr.find(".remove-from-cart-with-children").removeClass("hide");
       }
     }
   });
@@ -254,6 +323,23 @@ Cart.prototype.setupSearchResultsActions = function() {
       self.removeFromSelection($tr.data("uri"))
       $tr.find(".add-to-cart-btn").removeClass("hide");
       $tr.find(".remove-from-cart-btn").addClass("hide");
+    }).
+    on("click", ".cart-plus-children-btn", function(event) {
+      $(".cart-actions .btn-group button").attr("disabled","disabled");
+    	var $tr = $(event.target).closest("tr");
+    	self.addWithChildrenToSelection($tr.data("uri"), $tr.data("record-type"));
+    	$tr.find(".add-to-cart-btn").addClass("hide");
+      $tr.find(".remove-from-cart-btn").removeClass("hide");
+			$tr.find(".add-to-cart-with-children").addClass("hide");
+			$tr.find(".remove-from-cart-with-children").removeClass("hide");
+    }).
+     on("click", ".cart-minus-children-btn", function(event) {
+    	var $tr = $(event.target).closest("tr");
+    	self.removeWithChildrenFromSelection($tr.data("uri"));
+    	$tr.find(".add-to-cart-btn").removeClass("hide");
+      $tr.find(".remove-from-cart-btn").addClass("hide");
+			$tr.find(".add-to-cart-with-children").removeClass("hide");
+			$tr.find(".remove-from-cart-with-children").addClass("hide");
     });
 
 };
@@ -269,6 +355,9 @@ Cart.prototype.setupTreePageActions = function() {
   var $tree = $("#archives_tree");
   var $treeContainer = $tree.closest(".archives-tree-container");
 
+	var spinnerOverlay = AS.renderTemplate("template_cart_add_children_overlay");
+	$('.container-fluid .content-pane').prepend(spinnerOverlay);
+	
   if (!AS.hasOwnProperty("tree_data") || $tree.data("root-node-type") != "resource") {
     return;
   }
@@ -281,6 +370,10 @@ Cart.prototype.setupTreePageActions = function() {
       $treeContainer.find(".add-to-cart-btn").removeClass("hide");
       $treeContainer.find(".remove-from-cart-btn").addClass("hide");
     }
+    if (localStorage["as-cart-children"+uri]) {
+			$treeContainer.find(".add-to-cart-with-children").addClass("hide");
+			$treeContainer.find(".remove-from-cart-with-children").removeClass("hide");
+		}
   }
 
   function uriForNode($node) {
@@ -298,7 +391,7 @@ Cart.prototype.setupTreePageActions = function() {
       // nothing to do as item is new
       return;
     }
-
+    
     // remove any existing cart buttons
     $treeContainer.find(".cart-actions").remove();
 
@@ -306,6 +399,10 @@ Cart.prototype.setupTreePageActions = function() {
 
     var actions = AS.renderTemplate("template_cart_actions");
     $treeContainer.prepend(actions);
+		if ($.inArray($(".primary-selected").attr("rel"), self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
+			self.hideChildrenAction();
+			self.buttonGroupCSS();
+		}
 
     toggleCartActions(uri);
   };
@@ -329,6 +426,23 @@ Cart.prototype.setupTreePageActions = function() {
 
       self.removeFromSelection(uri)
 
+      toggleCartActions(uri);
+    }).
+    on("click", ".cart-plus-children-btn", function(event) {
+    	$(".cart-actions .btn-group button").attr("disabled","disabled");
+      var $node = $tree.find(".primary-selected");
+      var uri = uriForNode($node);
+    	self.addWithChildrenToSelection(uri, $node.attr("rel"));
+    	$treeContainer.find(".add-to-cart-with-children").addClass("hide");
+			$treeContainer.find(".remove-from-cart-with-children").removeClass("hide");
+      toggleCartActions(uri);
+    }).
+     on("click", ".cart-minus-children-btn", function(event) {
+      var $node = $tree.find(".primary-selected");
+      var uri = uriForNode($node);
+    	self.removeWithChildrenFromSelection(uri);
+    	$treeContainer.find(".add-to-cart-with-children").removeClass("hide");
+			$treeContainer.find(".remove-from-cart-with-children").addClass("hide");
       toggleCartActions(uri);
     });
 };
@@ -389,6 +503,7 @@ Cart.prototype.setupAddAllFromSearchAction = function() {
 
   $action.click(function() {
     $action.find(".loading").removeClass("hide");
+    self.insertOverlay();
     $action.prop("disabled", "disabled");
     $.getJSON("/plugins/component_report/uris_for_search" + location.search, function(json) {
       self.addAllToSelection(json);
@@ -396,10 +511,21 @@ Cart.prototype.setupAddAllFromSearchAction = function() {
       $action.removeClass("btn-info").addClass("btn-success");
       $action.find(".action-text").remove();
       $action.find(".success-text").removeClass("hide");
+      self.removeOverlay();
     });
   });
 };
 
+Cart.prototype.buttonGroupCSS = function () {
+	$(".remove-from-cart-btn").addClass("cart-non-btn-group");
+}
+
+Cart.prototype.hideChildrenAction = function () {
+	$(".add-to-cart-with-children, .remove-from-cart-with-children").hide();
+	var borderRadius = $(".add-to-cart-btn").css("border-top-left-radius");
+	$(".add-to-cart-btn").css("border-radius", borderRadius);
+	$(".remove-from-cart-btn").css("border-radius", borderRadius);
+}
 
 Cart.prototype.raiseCartIsFull = function() {
   this.$cart.find(".btn.show-cart-btn").addClass("btn-danger");
@@ -409,6 +535,17 @@ Cart.prototype.cartIsNoLongerFull = function() {
   this.$cart.find(".btn.show-cart-btn.btn-danger").removeClass("btn-danger");
 };
 
+Cart.prototype.insertOverlay = function() {
+	 var spinnerTop = window.innerHeight/2 - $('.spinner_for_cart').height();
+	 console.log(spinnerTop);
+    $("#archives_tree_overlay_for_cart_action").height('100%');
+    $("#archives_tree_overlay_for_cart_action").siblings(".spinner_for_cart").show().css('top',spinnerTop);
+  }
+  
+Cart.prototype.removeOverlay = function() {
+    $("#archives_tree_overlay_for_cart_action").height('0%');
+    $("#archives_tree_overlay_for_cart_action").siblings(".spinner_for_cart").hide().css('top','');
+  }
 
 $(function() {
   if (typeof CURRENT_REPO_URI == "undefined" || typeof CURRENT_USER_HASH == "undefined" ) {
@@ -417,7 +554,6 @@ $(function() {
 
   AS.Cart = new Cart(CURRENT_USER_HASH, CURRENT_REPO_URI);
 });
-
 
 // Add API for storing to LocalStorage
 AS.getData = function(key) {

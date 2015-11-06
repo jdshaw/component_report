@@ -1,7 +1,6 @@
 class CartController < ApplicationController
 
-  set_access_control  "view_repository" => [:checkout, :summary, :download_report, :uris_for_search]
-
+  set_access_control  "view_repository" => [:checkout, :summary, :download_report, :uris_for_search, :children_uris_for_search]
 
   def checkout
   end
@@ -21,8 +20,7 @@ class CartController < ApplicationController
 
 
   def download_report
-    uris = ASUtils.as_array(params[:uri])
-
+    uris = ASUtils.as_array(params[:uri])    
     queue = Queue.new
 
     backend_session = JSONModel::HTTP::current_backend_session
@@ -86,8 +84,37 @@ class CartController < ApplicationController
 
     render :json => JSONModel::HTTP::get_json("/plugins/component_report/repositories/#{session[:repo_id]}/uris_for_search", criteria)
   end
+  
+  def children_uris_for_search
+    ao_id = params[:uri].split("/").last
+    cart_max = params[:cart_max].to_i
+    children = []
+
+    if not ao_id.empty?
+      render :json => ultimate_children(ao_id, cart_max, children)
+    end
+  end
 
   private
+  
+  def ultimate_children(ao_id, cart_max, descendants)
+    
+    if descendants.empty?
+      descendants = []
+    end
+    
+    grand_children = JSONModel::HTTP::get_json("/repositories/#{session[:repo_id]}/archival_objects/#{ao_id}/children")
+    if not grand_children.empty?
+      grand_children.each do |descendant|
+        if not descendants.length >= cart_max
+          descendants.push(descendant["uri"])
+          ultimate_children(descendant["uri"].split('/').last, cart_max, descendants)
+        end
+      end
+    end
+
+    descendants
+  end
 
 
   def post_with_stream_response(uri, params = {}, &block)

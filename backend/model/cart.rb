@@ -1,3 +1,5 @@
+require 'aspace_logger'
+
 class Cart
 
   include JSONModel
@@ -30,29 +32,39 @@ class Cart
     elsif parsed[:type] == "archival_object"
       ancestors = calculate_archival_object_ancestors(uri, parsed[:id])
 
-      ["resource","series", "box", "file", "item"].zip(ancestors.reverse) do |level, uri|
+      ancestors.reverse.each do |level, uri|
         if uri
+          if level == "otherlevel"
+            level = "box"
+          end
+          
           cart_item[level] = { "ref" => uri }
         end
       end
     end
 
     @cart_items << cart_item
+
   end
 
   private
 
   def calculate_archival_object_ancestors(uri, ao_id)
     ao = ArchivalObject[ao_id]
+    level = [ao.level]
     ancestors = [uri]
+
     while(ao.parent_id) do
       ao = ArchivalObject[ao.parent_id]
       ancestors.push(ao.uri)
+      level.push(ao.level)
     end
+    
     resource = Resource[ao.root_record_id]
     ancestors.push(resource.uri)
+    level.push("resource")
 
-    ancestors
+    level.zip(ancestors)
   end
 
   def self.limit

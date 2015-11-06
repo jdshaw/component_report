@@ -1,61 +1,81 @@
-#cart {
-  margin-right: 10px;
+#cart{
+    margin-right:10px;
 }
-
-.cart-preview .icon-token {
-  margin: 0;
-  width: 20px;
+.cart-preview .icon-token{
+    margin:0;
+    width:20px;
 }
-
-table .table-record-actions .btn-group {
-  float: none;
+table .table-record-actions .btn-group{
+    float:none;
+    margin-top:4px;
+    width:100%;
 }
-
-.table-record-actions .add-to-cart-btn,
-.table-record-actions .remove-from-cart-btn {
-  margin-top: 4px;
-  width: 100%;
+.table-record-actions .remove-from-cart-btn,
+.archives-tree-container .remove-from-cart-btn{
+    border-radius:4px 0 0 4px !important; /* to compensate for this now being a button group */
 }
-
-.archives-tree-container .cart-actions {
-    float: right;
-    margin: 0 15px 0 5px;
+.table-record-actions .cart-non-btn-group,
+.archives-tree-container .cart-non-btn-group{
+    border-radius:4px !important; /* to compensate for resources not being button groups */
 }
-
-#cartCheckoutPane #cartData {
-    min-height: 200px;
+.archives-tree-container .cart-actions{
+    float:right;
+    margin:0 15px 0 5px;
 }
-
-#cartSummaryDropdownPanel {
-  padding: 10px;
+#cartCheckoutPane #cartData{
+    min-height:200px;
 }
-
-#cartSummaryDropdownPanel a {
-  width: 100%;
+#cartSummaryDropdownPanel{
+    padding:10px;
 }
-
-#generateReportFromCart {
-  margin-right: 10px;
+#cartSummaryDropdownPanel a{
+    width:100%;
 }
-
-#cartCheckoutPane .as-nav-list {
-  box-shadow: none;
+#generateReportFromCart{
+    margin-right:10px;
 }
-#cartCheckoutPane table td:empty {
-  text-align: center;
+#cartCheckoutPane .as-nav-list{
+    box-shadow:none;
 }
-#cartCheckoutPane table td:empty:before {
-  content: '-';
+#cartCheckoutPane table td:empty{
+    text-align:center;
 }
-
+#cartCheckoutPane table td:empty:before{
+    content:'-';
+}
 #cartCheckoutPane table .component-report-summary-box-container,
-#cartCheckoutPane table .component-report-summary-file-container {
-  text-align: right;
+#cartCheckoutPane table .component-report-summary-file-container{
+    text-align:right;
 }
-
-button.add-all-from-search-to-cart-btn {
-  position: absolute;
-  right: 35px;
-  top: 8px;
-  width: 100px;
+button.add-all-from-search-to-cart-btn{
+    position:absolute;
+    right:35px;
+    top:8px;
+    width:100px;
+}
+.content-pane #archives_tree_overlay_for_cart_action{
+    opacity:0.1;
+    z-index:100;
+}
+.content-pane .spinner_for_cart{
+    display:none;
+    font-size:30px;
+    left:50%;
+    margin-right:10px !important;
+    padding-right:0 !important;
+    position:absolute;
+    top:100px;
+}
+.spinner_for_cart:not(:required){
+    animation:1500ms linear 0s normal none infinite running spinner;
+    border-radius:0.5em;
+    box-shadow:1.5em 0 0 0 rgba(0, 0, 51, 0.3), 1.1em 1.1em 0 0 rgba(0, 0, 51, 0.3), 0 1.5em 0 0 rgba(0, 0, 51, 0.3), -1.1em 1.1em 0 0 rgba(0, 0, 51, 0.3), -1.5em 0 0 0 rgba(0, 0, 51, 0.3), -1.1em -1.1em 0 0 rgba(0, 0, 51, 0.3), 0 -1.5em 0 0 rgba(0, 0, 51, 0.3), 1.1em -1.1em 0 0 rgba(0, 0, 51, 0.3);
+    display:inline-block;
+    font-size:300%;
+    height:1em;
+    margin:0 auto;
+    overflow:hidden;
+    text-indent:100%;
+    width:1em;
+    z-index:1000
 }

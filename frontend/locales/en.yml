@@ -4,8 +4,10 @@ en:
     cart_clear_selection_button: Empty the Cart
     add_action: Add
     add_all_action: Add All
+    add_children_action: Add with Children
     add_all_action_success: Added to Cart
     remove_action: Remove
+    remove_children_action: Remove with Children
     checkout: Checkout
     loading: Loading your cart...
     is_empty: Cart is empty

@@ -69,6 +69,7 @@ class ComponentReport
 
 
   def initialize(cart)
+
     @cart = cart
 
     @p = Axlsx::Package.new
@@ -92,9 +93,16 @@ class ComponentReport
   private
 
   def build_report
+
     add_empty_worksheets_with_headers
 
     @cart.each do |cart_item|
+      # bit of a kluge for objects in the tree that do not have series in the ancestors
+      # ie if we have a box directly descended from a resource
+      # basically build out a minimal, empty series object and add that to the cart_item
+      if cart_item['box'] && !cart_item['series']
+        cart_item['series'] = {"ref"=>"", "_resolved" => {"title"=>"","dates"=>[],"notes"=>[]}}
+      end
       add_cart_item_to_report(cart_item)
     end
   end
@@ -273,5 +281,4 @@ class ComponentReport
 
     first_container_instance ? first_container_instance["container"]["indicator_2"] : ""
   end
-  
 end

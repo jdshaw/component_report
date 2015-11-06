@@ -42,7 +42,7 @@
     <% @search_data['results'].each do |result| 
       deleted = (params.has_key?("deleted_uri") and Array(params["deleted_uri"]).include?(result["id"])) || false
     %>
-      <tr data-uri="<%= result["id"] %>" data-record-type="<%= result["primary_type"] %>" class="<%= "deleted" if deleted %>">
+      <tr data-uri="<%= result["id"] %>" data-record-type="<%= result["primary_type"] %>" class="<%= "deleted" if deleted %>" data-has-children="<%= result["id"] %>">
         <% if allow_multi_select? %>
           <td class="multiselect-column">
             <%= check_box_tag "multiselect-item", result["id"], false %>
@@ -60,12 +60,12 @@
           <% end %>
         <% end %>
         <% if show_record_type? %>
-          <td>
+          <td class="search-record-type">
              <%=  I18n.t("#{result["primary_type"]}._singular", :default => I18n.t("plugins.#{result["primary_type"]}._singular")) %>
           </td>
         <% end %>
         <% if show_title_column? %>
-          <td>
+          <td class="search-title-column">
             <% if result['primary_type'] === "repository" and session[:repo] === result['id'] %><span class="label label-success"><%= I18n.t("repository._frontend.messages.selected_short") %></span><% end %>
             <% if result["suppressed"] %><span class="label label-info"><%= I18n.t("states.suppressed") %></span><% end %>
             <% if deleted %><span class="label label-important"><%= I18n.t("states.deleted") %></span><% end %>
@@ -74,7 +74,7 @@
         <% end %>
         <% if extra_columns? %>
           <% extra_columns.each do |col| %>
-            <td><%= col.value_for(result) %></td>
+            <td class="<%= col.label.downcase rescue "" %>" data-<%= col.label.downcase rescue "" %>="<%= col.value_for(result).downcase rescue "" %>"><%= col.value_for(result) %></td>
           <% end %>
         <% end %>
         <td>
