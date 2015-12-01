@@ -537,7 +537,6 @@ Cart.prototype.cartIsNoLongerFull = function() {
 
 Cart.prototype.insertOverlay = function() {
 	 var spinnerTop = window.innerHeight/2 - $('.spinner_for_cart').height();
-	 console.log(spinnerTop);
     $("#archives_tree_overlay_for_cart_action").height('100%');
     $("#archives_tree_overlay_for_cart_action").siblings(".spinner_for_cart").show().css('top',spinnerTop);
   }
