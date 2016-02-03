@@ -100,9 +100,17 @@ class ComponentReport
       # bit of a kluge for objects in the tree that do not have series in the ancestors
       # ie if we have a box directly descended from a resource
       # basically build out a minimal, empty series object and add that to the cart_item
+      # also a kluge for files that hang directly off of a resource or a series - eg vertical files and alumni files
       if cart_item['box'] && !cart_item['series']
         cart_item['series'] = {"ref"=>"", "_resolved" => {"title"=>"","dates"=>[],"notes"=>[]}}
       end
+      if cart_item['file'] && !cart_item['box']
+        if !cart_item['series']
+          cart_item['series'] = {"ref"=>"", "_resolved" => {"title"=>"","dates"=>[],"notes"=>[]}}
+        end
+        cart_item['box'] = {"ref"=>"", "_resolved" => {"title"=>"","dates"=>[],"notes"=>[]}}
+      end
+      
       add_cart_item_to_report(cart_item)
     end
   end
