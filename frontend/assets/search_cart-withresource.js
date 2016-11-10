@@ -22,12 +22,10 @@ function Cart(primaryKey, secondaryKey) {
 
   // only allow these types to be added to the cart
   this.SUPPORTED_JSONMODEL_TYPES = ['resource', 'archival_object'];
-	this.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN = ['archival_object'];
 
   this.setupCartEvents();
   this.updateSelectionSummary();
-  //this.setupSearchResultsActions();
-  this.setupGoogleListSearchResultsActions();
+  this.setupSearchResultsActions();
   if (this.IS_SEARCH_PAGE) {
     this.setupAddAllFromSearchAction();
   }
@@ -226,24 +224,30 @@ Cart.prototype.addURItoCartData = function(uri) {
 
 Cart.prototype.addURIChildrenToCartData = function(uri) {
 	var self = this;
+	
+	return function() {
+		var currentCartMax = self.LIMIT - self.$cart.find(".cart-count").html();
+		if (currentCartMax > 0) {
+			var defer = $.Deferred();
+				$.post("/plugins/component_report/children_uris_for_search", 
+					{uri:uri, cart_max: currentCartMax},
+					function (json) {
+						defer.resolve();
+						localStorage.setItem("as-cart-children"+uri,json);
+						
+						$.each(json, function(k,v){
+							self.addURItoCartData(v);
+						});
+						
+						self.updateSelectionSummary();
+						$(".cart-actions .btn-group button").removeAttr("disabled");
+					}
+				);
 
-	var currentCartMax = self.LIMIT - self.$cart.find(".cart-count").html();
-	if (currentCartMax > 0) {
-			$.post("/plugins/component_report/children_uris_for_search", 
-				{uri:uri, cart_max: currentCartMax},
-				function (json) {
-					localStorage.setItem("as-cart-children"+uri,json);
-					
-					$.each(json, function(k,v){
-						self.addURItoCartData(v);
-					});
-					
-					self.updateSelectionSummary();
-					$(".cart-actions .btn-group button").removeAttr("disabled");
-					self.removeOverlay();
-				}
-			);
+			return defer.promise();
 		}
+		self.removeOverlay();
+	}
 };
 
 Cart.prototype.addToSelection = function(uri, record_type) {
@@ -260,14 +264,43 @@ Cart.prototype.addToSelection = function(uri, record_type) {
 Cart.prototype.addWithChildrenToSelection = function (uri, record_type) {
 	var self = this;
 	
-	if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
+	if ($.inArray(record_type, self.SUPPORTED_JSONMODEL_TYPES) < 0) {
     return;
   }
   
   self.addURItoCartData(uri);
   self.updateSelectionSummary();
   self.insertOverlay();
-	self.addURIChildrenToCartData(uri);
+
+  // if the record is a resource, we need to find all of the children and 
+  // send those individually off to addWithChildrenToSelection()
+  // do this serially so that we don't overrun the cart limit by too much
+  if (record_type == 'resource') {
+  	var resourceChildren = new Array();
+  	var resourceID = $('#archives_tree').data("root-id");
+  	$.getJSON("/resources/"+resourceID+"/tree", function (json) {
+  		$.each(json.children, function (child, object) {
+  			self.addURItoCartData(object.record_uri);
+  			self.updateSelectionSummary();
+  			resourceChildren.push(object.record_uri);
+  			populateChildren();
+			});
+  	});
+  }
+  else {
+   resourceChildren = [uri];
+   populateChildren();
+  }
+  
+  function populateChildren() { 
+  console.log(resourceChildren);
+
+  var base = $.when({});
+  $.each(resourceChildren, function (k,v) {
+			base = base.then(self.addURIChildrenToCartData(v));
+	});
+  }
+  //else $.when({}).then(self.addURIChildrenToCartData(uri));
 };
 
 Cart.prototype.removeWithChildrenFromSelection = function (uri) {
@@ -282,68 +315,62 @@ Cart.prototype.removeWithChildrenFromSelection = function (uri) {
   localStorage.removeItem(localStoreKey);
 };
 
-Cart.prototype.setupGoogleListSearchResultsActions = function() {
+
+Cart.prototype.setupSearchResultsActions = function() {
   var self = this;
 
-  self.$parent_div = $("#tabledSearchResults");
+  self.$table = $(".table-search-results");
   var actions = AS.renderTemplate("template_cart_actions");
 
-  self.$parent_div.find("div.search-results-result[data-uri]").each(function() {
-    var $div = $(this);
-    if ($.inArray($div.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
-      $div.find(".table-record-actions").append(actions);
-			
-			if ($.inArray($div.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
-				$div.find(".add-to-cart-with-children, remove-from-cart-with-children").hide();
-				self.buttonGroupCSS();
-				self.hideChildrenAction();
-			}
+  self.$table.find("tr[data-uri]").each(function() {
+    var $tr = $(this);
+    if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
+      $tr.find(".table-record-actions").append(actions);
 
-      if (self.isSelected($div.data("uri"))) {
-        $div.find(".add-to-cart-btn").addClass("hide");
-        $div.find(".remove-from-cart-btn").removeClass("hide");
+      if (self.isSelected($tr.data("uri"))) {
+        $tr.find(".add-to-cart-btn").addClass("hide");
+        $tr.find(".remove-from-cart-btn").removeClass("hide");
       }
 
-      if (localStorage["as-cart-children"+$div.data("uri")]) {
-				$div.find(".add-to-cart-with-children").addClass("hide");
-				$div.find(".remove-from-cart-with-children").removeClass("hide");
+      if (localStorage["as-cart-children"+$tr.data("uri")]) {
+				$tr.find(".add-to-cart-with-children").addClass("hide");
+				$tr.find(".remove-from-cart-with-children").removeClass("hide");
       }
     }
   });
 
-  self.$parent_div.
+  self.$table.
     on("click", ".add-to-cart-btn", function(event) {
-      var $div = $(event.target).closest("div.search-results-result");
-      self.addToSelection($div.data("uri"), $div.data("record-type"));
-      $div.find(".add-to-cart-btn").addClass("hide");
-      $div.find(".remove-from-cart-btn").removeClass("hide");
+      var $tr = $(event.target).closest("tr");
+      self.addToSelection($tr.data("uri"), $tr.data("record-type"));
+      $tr.find(".add-to-cart-btn").addClass("hide");
+      $tr.find(".remove-from-cart-btn").removeClass("hide");
     }).
     on("click", ".remove-from-cart-btn", function(event) {
-      var $div = $(event.target).closest("div.search-results-result");
-      self.removeFromSelection($div.data("uri"))
-      $div.find(".add-to-cart-btn").removeClass("hide");
-      $div.find(".remove-from-cart-btn").addClass("hide");
+      var $tr = $(event.target).closest("tr");
+      self.removeFromSelection($tr.data("uri"))
+      $tr.find(".add-to-cart-btn").removeClass("hide");
+      $tr.find(".remove-from-cart-btn").addClass("hide");
     }).
     on("click", ".cart-plus-children-btn", function(event) {
       $(".cart-actions .btn-group button").attr("disabled","disabled");
-    	var $div = $(event.target).closest("div.search-results-result");
-    	self.addWithChildrenToSelection($div.data("uri"), $div.data("record-type"));
-    	$div.find(".add-to-cart-btn").addClass("hide");
-      $div.find(".remove-from-cart-btn").removeClass("hide");
-			$div.find(".add-to-cart-with-children").addClass("hide");
-			$div.find(".remove-from-cart-with-children").removeClass("hide");
+    	var $tr = $(event.target).closest("tr");
+    	self.addWithChildrenToSelection($tr.data("uri"), $tr.data("record-type"));
+    	$tr.find(".add-to-cart-btn").addClass("hide");
+      $tr.find(".remove-from-cart-btn").removeClass("hide");
+			$tr.find(".add-to-cart-with-children").addClass("hide");
+			$tr.find(".remove-from-cart-with-children").removeClass("hide");
     }).
      on("click", ".cart-minus-children-btn", function(event) {
-    	var $div = $(event.target).closest("div.search-results-result");
-    	self.removeWithChildrenFromSelection($div.data("uri"));
-    	$div.find(".add-to-cart-btn").removeClass("hide");
-      $div.find(".remove-from-cart-btn").addClass("hide");
-			$div.find(".add-to-cart-with-children").removeClass("hide");
-			$div.find(".remove-from-cart-with-children").addClass("hide");
+    	var $tr = $(event.target).closest("tr");
+    	self.removeWithChildrenFromSelection($tr.data("uri"));
+    	$tr.find(".add-to-cart-btn").removeClass("hide");
+      $tr.find(".remove-from-cart-btn").addClass("hide");
+			$tr.find(".add-to-cart-with-children").removeClass("hide");
+			$tr.find(".remove-from-cart-with-children").addClass("hide");
     });
 
 };
-
 
 
 Cart.prototype.isSelected = function(uri) {
@@ -400,10 +427,6 @@ Cart.prototype.setupTreePageActions = function() {
 
     var actions = AS.renderTemplate("template_cart_actions");
     $treeContainer.prepend(actions);
-		if ($.inArray($(".primary-selected").attr("rel"), self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
-			self.hideChildrenAction();
-			self.buttonGroupCSS();
-		}
 
     toggleCartActions(uri);
   };
@@ -492,7 +515,7 @@ Cart.prototype.addAllToSelection = function(uris) {
 
 Cart.prototype.setupAddAllFromSearchAction = function() {
   var self = this;
-  var $searchTable = $("#tabledSearchResults"); // use .record-pane in v150
+  var $searchTable = $("#tabledSearchResults");
 
   if ($searchTable.length == 0) {
     // no search results on this page
@@ -500,11 +523,10 @@ Cart.prototype.setupAddAllFromSearchAction = function() {
   }
 
   var $action = $(AS.renderTemplate("template_cart_add_all_action"));
-  $searchTable.before($action); // use prepend instead of before in v150
+  $searchTable.before($action);
 
   $action.click(function() {
     $action.find(".loading").removeClass("hide");
-    self.insertOverlay();
     $action.prop("disabled", "disabled");
     $.getJSON("/plugins/component_report/uris_for_search" + location.search, function(json) {
       self.addAllToSelection(json);
@@ -512,21 +534,10 @@ Cart.prototype.setupAddAllFromSearchAction = function() {
       $action.removeClass("btn-info").addClass("btn-success");
       $action.find(".action-text").remove();
       $action.find(".success-text").removeClass("hide");
-      self.removeOverlay();
     });
   });
 };
 
-Cart.prototype.buttonGroupCSS = function () {
-	$(".remove-from-cart-btn").addClass("cart-non-btn-group");
-}
-
-Cart.prototype.hideChildrenAction = function () {
-	$(".add-to-cart-with-children, .remove-from-cart-with-children").hide();
-	var borderRadius = $(".add-to-cart-btn").css("border-top-left-radius");
-	$(".add-to-cart-btn").css("border-radius", borderRadius);
-	$(".remove-from-cart-btn").css("border-radius", borderRadius);
-}
 
 Cart.prototype.raiseCartIsFull = function() {
   this.$cart.find(".btn.show-cart-btn").addClass("btn-danger");
@@ -537,7 +548,8 @@ Cart.prototype.cartIsNoLongerFull = function() {
 };
 
 Cart.prototype.insertOverlay = function() {
-	 var spinnerTop = window.innerHeight/2 - $('.spinner_for_cart').height();
+	 var spinnerTop = window.innerHeight/2;
+	 //console.log(spinnerTop);
     $("#archives_tree_overlay_for_cart_action").height('100%');
     $("#archives_tree_overlay_for_cart_action").siblings(".spinner_for_cart").show().css('top',spinnerTop);
   }

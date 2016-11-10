@@ -8,6 +8,14 @@
         <span class="action-text"><%= I18n.t("cart.summary.generate_report") %></span>
         <span class="loading-text" style="display: none"><%= I18n.t("cart.summary.generating_report") %></span>
       </button>
+      <div class="pull-right report-type">
+        <select id="generateReportType" class="form-control pull-right">
+          <option selected value="patron"><%= I18n.t("cart.summary.report_type.patron") %></option>
+          <option selected value="staff_only"><%= I18n.t("cart.summary.report_type.staff_only") %></option>
+          <option value="shared_shelf"><%= I18n.t("cart.summary.report_type.shared_shelf") %></option>
+        </select>
+      </div>
+      <label class="pull-right lead report-type" for="generateReportType">Report Type:</label>
 
       <h2><%= I18n.t("cart.checkout") %></h2>
 

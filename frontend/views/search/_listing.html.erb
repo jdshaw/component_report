@@ -11,11 +11,6 @@
       <% if params[:linker]==='true' %>
         <th></th>
       <% end %>
-      <% if show_record_type? %>
-        <th class="col record-type sortable <% if @search_data.sorted_by === "primary_type"%>sort-<%= @search_data.current_sort_direction %><% end %>">
-          <%= link_to I18n.t("search_results.result_type"), build_search_params("sort" => @search_data.sort_filter_for("primary_type")) %>
-        </th>
-      <% end %>
       <% if show_title_column? %>
         <th class="col title sortable <% if @search_data.sorted_by === "title_sort"%>sort-<%= @search_data.current_sort_direction %><% end %>">
           <%= link_to title_column_header_label, build_search_params("sort" => @search_data.sort_filter_for("title_sort")) %>
@@ -32,7 +27,11 @@
           </th>
         <% end %>
       <% end %>
-      <th class="col audit-info"></th>
+      <% if show_record_type? %>
+        <th class="col record-type sortable <% if @search_data.sorted_by === "primary_type"%>sort-<%= @search_data.current_sort_direction %><% end %>">
+          <%= link_to I18n.t("search_results.result_type"), build_search_params("sort" => @search_data.sort_filter_for("primary_type")) %>
+        </th>
+      <% end %>
       <% if !params[:linker] || params[:linker] === 'false' %>
         <th class="col actions"><!-- actions --></th>
       <% end %>
@@ -59,16 +58,12 @@
             </td>
           <% end %>
         <% end %>
-        <% if show_record_type? %>
-          <td class="search-record-type">
-             <%=  I18n.t("#{result["primary_type"]}._singular", :default => I18n.t("plugins.#{result["primary_type"]}._singular")) %>
-          </td>
-        <% end %>
         <% if show_title_column? %>
           <td class="search-title-column">
             <% if result['primary_type'] === "repository" and session[:repo] === result['id'] %><span class="label label-success"><%= I18n.t("repository._frontend.messages.selected_short") %></span><% end %>
             <% if result["suppressed"] %><span class="label label-info"><%= I18n.t("states.suppressed") %></span><% end %>
             <% if deleted %><span class="label label-important"><%= I18n.t("states.deleted") %></span><% end %>
+            <% if result["total_restrictions_u_sstr"] && result["total_restrictions_u_sstr"].join("") === "true" %><span class="label label-warning"><%= I18n.t("states.restricted") %></span><% end %>
           <%=  clean_mixed_content(result["title"]).html_safe || clean_mixed_content(result['display_string']).html_safe %>
           </td>
         <% end %>
@@ -77,9 +72,11 @@
             <td class="<%= col.label.downcase rescue "" %>" data-<%= col.label.downcase rescue "" %>="<%= col.value_for(result).downcase rescue "" %>"><%= col.value_for(result) %></td>
           <% end %>
         <% end %>
-        <td>
-          <%= display_audit_info(result, :format => 'compact') %>
-        </td>
+        <% if show_record_type? %>
+          <td class="search-record-type">
+             <%=  I18n.t("#{result["primary_type"]}._singular", :default => I18n.t("plugins.#{result["primary_type"]}._singular")) %>
+          </td>
+        <% end %>
         <% if !params[:linker] || params[:linker] === 'false' %>
           <td class="table-record-actions">
             <% if not deleted %>

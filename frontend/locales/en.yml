@@ -2,11 +2,11 @@ en:
   cart:
     your_cart: Your Cart
     cart_clear_selection_button: Empty the Cart
-    add_action: Add
+    add_action: Add to Cart
     add_all_action: Add All
     add_children_action: Add with Children
     add_all_action_success: Added to Cart
-    remove_action: Remove
+    remove_action: Remove from Cart
     remove_children_action: Remove with Children
     checkout: Checkout
     loading: Loading your cart...
@@ -23,3 +23,7 @@ en:
       is_full: Your cart is full. The current limit is %{limit} records.
       generate_report: Generate Report
       generating_report: Generating Report...
+      report_type:
+        patron: Patron
+        shared_shelf: Shared Shelf
+        staff_only: Staff Only
