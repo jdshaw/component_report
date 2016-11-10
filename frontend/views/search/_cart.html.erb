@@ -52,16 +52,16 @@
 <div id="template_cart_actions"><!--
   <div class="cart-actions">
     <div class="btn-group" role="group">
-      <button class="btn btn-xs btn-info cart-btn add-to-cart-btn"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.add_action") %></button>
-      <button class="btn btn-xs btn-warning cart-btn remove-from-cart-btn hide"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
-      <button class="btn btn-xs btn-info dropdown-toggle add-to-cart-with-children" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <button class="btn btn-sm btn-info cart-btn add-to-cart-btn"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.add_action") %></button>
+      <button class="btn btn-sm btn-warning cart-btn remove-from-cart-btn hide"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.remove_action") %></button>
+      <button class="btn btn-sm btn-info dropdown-toggle add-to-cart-with-children" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="caret"></span>
         <span class="sr-only">Toggle Dropdown</span>
       </button>
       <ul class="dropdown-menu add-to-cart-with-children">
         <li class="bg-info"><a class="cart-plus-children-btn" href="#"><span class="glyphicon glyphicon-shopping-cart"></span> <%= I18n.t("cart.add_children_action") %></a></li>
       </ul>
-      <button class="btn btn-xs btn-warning dropdown-toggle remove-from-cart-with-children hide" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+      <button class="btn btn-sm btn-warning dropdown-toggle remove-from-cart-with-children hide" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="caret"></span>
         <span class="sr-only">Toggle Dropdown</span>
       </button>
@@ -73,7 +73,7 @@
 --></div>
 
 <div id="template_cart_add_all_action"><!--
-  <button class="btn btn-xs btn-info add-all-from-search-to-cart-btn">
+  <button class="btn btn-sm btn-info add-all-from-search-to-cart-btn pull-right">
     <%= image_tag "#{AppConfig[:frontend_prefix]}assets/images/btn-info-busy.gif", :class => "loading hide" %>
     <span class="glyphicon glyphicon-shopping-cart"></span>
     <span class="action-text"><%= I18n.t("cart.add_all_action") %></span>
@@ -84,6 +84,10 @@
 <div id="template_cart_add_children_overlay"><!--
   <div id="archives_tree_overlay_for_cart_action" class="modal-backdrop in" style="height: 0%;"></div>
   <i class="spinner_for_cart" style="display: none;"></i>
+--></div>
+
+<div id="template_cart_shared_shelf_warning"><!--
+  <div id="shared_shelf_warning" class="alert alert-warning">Note that this report will only export <strong>item</strong> records.</div>
 --></div>
 
 <% if current_user && current_repo %>

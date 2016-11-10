@@ -26,7 +26,8 @@ function Cart(primaryKey, secondaryKey) {
 
   this.setupCartEvents();
   this.updateSelectionSummary();
-  this.setupSearchResultsActions();
+  //this.setupSearchResultsActions();
+  this.setupGoogleListSearchResultsActions();
   if (this.IS_SEARCH_PAGE) {
     this.setupAddAllFromSearchAction();
   }
@@ -281,68 +282,68 @@ Cart.prototype.removeWithChildrenFromSelection = function (uri) {
   localStorage.removeItem(localStoreKey);
 };
 
-
-Cart.prototype.setupSearchResultsActions = function() {
+Cart.prototype.setupGoogleListSearchResultsActions = function() {
   var self = this;
 
-  self.$table = $(".table-search-results");
+  self.$parent_div = $("#tabledSearchResults");
   var actions = AS.renderTemplate("template_cart_actions");
 
-  self.$table.find("tr[data-uri]").each(function() {
-    var $tr = $(this);
-    if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
-      $tr.find(".table-record-actions").append(actions);
+  self.$parent_div.find("div.search-results-result[data-uri]").each(function() {
+    var $div = $(this);
+    if ($.inArray($div.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES) >= 0) {
+      $div.find(".table-record-actions").append(actions);
 			
-			if ($.inArray($tr.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
-				$tr.find(".add-to-cart-with-children, remove-from-cart-with-children").hide();
+			if ($.inArray($div.data("record-type"), self.SUPPORTED_JSONMODEL_TYPES_FOR_CHILDREN) < 0) {
+				$div.find(".add-to-cart-with-children, remove-from-cart-with-children").hide();
 				self.buttonGroupCSS();
 				self.hideChildrenAction();
 			}
 
-      if (self.isSelected($tr.data("uri"))) {
-        $tr.find(".add-to-cart-btn").addClass("hide");
-        $tr.find(".remove-from-cart-btn").removeClass("hide");
+      if (self.isSelected($div.data("uri"))) {
+        $div.find(".add-to-cart-btn").addClass("hide");
+        $div.find(".remove-from-cart-btn").removeClass("hide");
       }
 
-      if (localStorage["as-cart-children"+$tr.data("uri")]) {
-				$tr.find(".add-to-cart-with-children").addClass("hide");
-				$tr.find(".remove-from-cart-with-children").removeClass("hide");
+      if (localStorage["as-cart-children"+$div.data("uri")]) {
+				$div.find(".add-to-cart-with-children").addClass("hide");
+				$div.find(".remove-from-cart-with-children").removeClass("hide");
       }
     }
   });
 
-  self.$table.
+  self.$parent_div.
     on("click", ".add-to-cart-btn", function(event) {
-      var $tr = $(event.target).closest("tr");
-      self.addToSelection($tr.data("uri"), $tr.data("record-type"));
-      $tr.find(".add-to-cart-btn").addClass("hide");
-      $tr.find(".remove-from-cart-btn").removeClass("hide");
+      var $div = $(event.target).closest("div.search-results-result");
+      self.addToSelection($div.data("uri"), $div.data("record-type"));
+      $div.find(".add-to-cart-btn").addClass("hide");
+      $div.find(".remove-from-cart-btn").removeClass("hide");
     }).
     on("click", ".remove-from-cart-btn", function(event) {
-      var $tr = $(event.target).closest("tr");
-      self.removeFromSelection($tr.data("uri"))
-      $tr.find(".add-to-cart-btn").removeClass("hide");
-      $tr.find(".remove-from-cart-btn").addClass("hide");
+      var $div = $(event.target).closest("div.search-results-result");
+      self.removeFromSelection($div.data("uri"))
+      $div.find(".add-to-cart-btn").removeClass("hide");
+      $div.find(".remove-from-cart-btn").addClass("hide");
     }).
     on("click", ".cart-plus-children-btn", function(event) {
       $(".cart-actions .btn-group button").attr("disabled","disabled");
-    	var $tr = $(event.target).closest("tr");
-    	self.addWithChildrenToSelection($tr.data("uri"), $tr.data("record-type"));
-    	$tr.find(".add-to-cart-btn").addClass("hide");
-      $tr.find(".remove-from-cart-btn").removeClass("hide");
-			$tr.find(".add-to-cart-with-children").addClass("hide");
-			$tr.find(".remove-from-cart-with-children").removeClass("hide");
+    	var $div = $(event.target).closest("div.search-results-result");
+    	self.addWithChildrenToSelection($div.data("uri"), $div.data("record-type"));
+    	$div.find(".add-to-cart-btn").addClass("hide");
+      $div.find(".remove-from-cart-btn").removeClass("hide");
+			$div.find(".add-to-cart-with-children").addClass("hide");
+			$div.find(".remove-from-cart-with-children").removeClass("hide");
     }).
      on("click", ".cart-minus-children-btn", function(event) {
-    	var $tr = $(event.target).closest("tr");
-    	self.removeWithChildrenFromSelection($tr.data("uri"));
-    	$tr.find(".add-to-cart-btn").removeClass("hide");
-      $tr.find(".remove-from-cart-btn").addClass("hide");
-			$tr.find(".add-to-cart-with-children").removeClass("hide");
-			$tr.find(".remove-from-cart-with-children").addClass("hide");
+    	var $div = $(event.target).closest("div.search-results-result");
+    	self.removeWithChildrenFromSelection($div.data("uri"));
+    	$div.find(".add-to-cart-btn").removeClass("hide");
+      $div.find(".remove-from-cart-btn").addClass("hide");
+			$div.find(".add-to-cart-with-children").removeClass("hide");
+			$div.find(".remove-from-cart-with-children").addClass("hide");
     });
 
 };
+
 
 
 Cart.prototype.isSelected = function(uri) {
@@ -491,7 +492,7 @@ Cart.prototype.addAllToSelection = function(uris) {
 
 Cart.prototype.setupAddAllFromSearchAction = function() {
   var self = this;
-  var $searchTable = $("#tabledSearchResults");
+  var $searchTable = $("#tabledSearchResults"); // use .record-pane in v150
 
   if ($searchTable.length == 0) {
     // no search results on this page
@@ -499,7 +500,7 @@ Cart.prototype.setupAddAllFromSearchAction = function() {
   }
 
   var $action = $(AS.renderTemplate("template_cart_add_all_action"));
-  $searchTable.before($action);
+  $searchTable.before($action); // use prepend instead of before in v150
 
   $action.click(function() {
     $action.find(".loading").removeClass("hide");

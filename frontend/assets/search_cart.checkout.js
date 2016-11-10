@@ -15,8 +15,19 @@ CartCheckout.prototype.loadCart = function() {
   self.cart.loadCart(self.$cartData, function() {
     $("#generateReportFromCart").prop("disabled", false);
   });
-
+  
+	self.sharedShelf();
+	
+	this.$container.on("change", "#generateReportType", function() {
+		self.sharedShelf();
+	});
+	
   this.$container.on("click", "#generateReportFromCart", function() {
+  	$('<input />').attr('type', 'hidden')
+			.attr('name', "type")
+			.attr('value', $("#generateReportType").val())
+			.appendTo('#componentReportForm');
+          
     $("#componentReportForm").trigger("submit");
     $("#generateReportFromCart").prop("disabled", "disabled");
     $("#generateReportFromCart").find(".action-text").hide();
@@ -33,6 +44,14 @@ CartCheckout.prototype.loadCart = function() {
     location.reload();
   });
 };
+
+CartCheckout.prototype.sharedShelf = function() {
+	if ($("#generateReportType").val() == "shared_shelf") {
+			var shared_shelf_warning = $(AS.renderTemplate("template_cart_shared_shelf_warning"));
+			$("#componentReportForm").prepend(shared_shelf_warning);
+	}
+	else $("#shared_shelf_warning").remove();
+}
 
 $(function() {
   if (typeof AS.Cart == "undefined") {

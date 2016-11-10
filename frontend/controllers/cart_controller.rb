@@ -1,3 +1,4 @@
+require 'securerandom'
 class CartController < ApplicationController
 
   set_access_control  "view_repository" => [:checkout, :summary, :download_report, :uris_for_search, :children_uris_for_search]
@@ -20,7 +21,9 @@ class CartController < ApplicationController
 
 
   def download_report
-    uris = ASUtils.as_array(params[:uri])    
+    uris = ASUtils.as_array(params[:uri])
+    type = params[:type] ? params[:type] : ""
+    report_id = SecureRandom.uuid
     queue = Queue.new
 
     backend_session = JSONModel::HTTP::current_backend_session
@@ -28,7 +31,7 @@ class CartController < ApplicationController
     Thread.new do
       JSONModel::HTTP::current_backend_session = backend_session
       begin
-        post_with_stream_response("/plugins/component_report/repositories/#{session[:repo_id]}/report", "uri[]" => uris) do |report_response|
+        post_with_stream_response("/plugins/component_report/repositories/#{session[:repo_id]}/report", "uri[]" => uris, "type" => type, "report_id" => report_id) do |report_response|
           response.headers['Content-Disposition'] = report_response['Content-Disposition']
           response.headers['Content-Type'] = report_response['Content-Type']
           response.headers['Last-Modified'] = Time.now.to_s
