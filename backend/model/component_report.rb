@@ -163,17 +163,24 @@ class ComponentReport
 
     # boxes
     @boxes_ws = @wb.add_worksheet(:name => "Boxes")
-    @boxes_ws.add_row(BOX_COLUMNS.map{|col| col[:header] unless (col[:header]=="Box Number" && type==PATRON_TYPE)})
+    box_headers = BOX_COLUMNS.map{|col| (col[:header]=="Box Location" && type==PATRON_TYPE)? next : col[:header]}.reject{|e| e.to_s.empty?}
+    @boxes_ws.add_row(box_headers)
+    
 
     # files
     @files_ws = @wb.add_worksheet(:name => "Files")
-    @files_ws.add_row(FILE_COLUMNS.map{|col| col[:header] unless (col[:header]=="Box Number" && type==PATRON_TYPE)})
-
+    file_headers = FILE_COLUMNS.map{|col| (col[:header]=="Box Location" && type==PATRON_TYPE)? next : col[:header]}.reject{|e| e.to_s.empty?}
+    @files_ws.add_row(file_headers)
+    
     # items
     @items_ws = @wb.add_worksheet(:name => "Items")
-    @items_ws.add_row(ITEM_COLUMNS.map{|col| col[:header] unless (col[:header]=="Box Number" && type==PATRON_TYPE)})
+    item_headers = ITEM_COLUMNS.map{|col| (col[:header]=="Box Location" && type==PATRON_TYPE)? next : col[:header]}.reject{|e| e.to_s.empty?}
+    @items_ws.add_row(item_headers)
   end
 
+  # a placeholder so that we can remove the array element that corresponds to the box location for patron reports
+  # we can't use empty or nil since other elements may fit that criteria
+  BOX_LOCATION_PLACEHOLDER = "BOX_LOCATION_PLACEHOLDER"
 
   # Add the cart item to the correct worksheet
   def add_cart_item_to_report(cart_item, type)
@@ -185,7 +192,7 @@ class ComponentReport
   end
 
   def add_item(cart_item, type)
-    cart_item['item'] && @items_ws.add_row(ITEM_COLUMNS.map {|col| col[:proc].call(cart_item['resource']['_resolved'],cart_item['series']['_resolved'],cart_item['box']['_resolved'], cart_item['file']['_resolved'],cart_item['item']['_resolved']) unless (col[:header]=="Box Number" && type==PATRON_TYPE) }, style: @cell_style)
+    cart_item['item'] && @items_ws.add_row(ITEM_COLUMNS.map {|col| (col[:header]=="Box Location" && type==PATRON_TYPE)? BOX_LOCATION_PLACEHOLDER : col[:proc].call(cart_item['resource']['_resolved'],cart_item['series']['_resolved'],cart_item['box']['_resolved'], cart_item['file']['_resolved'],cart_item['item']['_resolved'])}.reject{|e| e==BOX_LOCATION_PLACEHOLDER}, style: @cell_style)
   end
   
   def add_ss_item(cart_item)
@@ -193,12 +200,12 @@ class ComponentReport
   end
 
   def add_file(cart_item, type)
-    cart_item['file'] && @files_ws.add_row(FILE_COLUMNS.map {|col| col[:proc].call(cart_item['resource']['_resolved'],cart_item['series']['_resolved'],cart_item['box']['_resolved'],cart_item['file']['_resolved']) unless (col[:header]=="Box Number" && type==PATRON_TYPE)}, style: @cell_style)
+    cart_item['file'] && @files_ws.add_row(FILE_COLUMNS.map {|col| (col[:header]=="Box Location" && type==PATRON_TYPE)? BOX_LOCATION_PLACEHOLDER : col[:proc].call(cart_item['resource']['_resolved'],cart_item['series']['_resolved'],cart_item['box']['_resolved'],cart_item['file']['_resolved'])}.reject{|e| e==BOX_LOCATION_PLACEHOLDER}, style: @cell_style)
   end
 
 
   def add_box(cart_item, type)
-    cart_item['box'] && @boxes_ws.add_row(BOX_COLUMNS.map {|col| col[:proc].call(cart_item['resource']['_resolved'],cart_item['series']['_resolved'],cart_item['box']['_resolved']) unless (col[:header]=="Box Number" && type==PATRON_TYPE)}, style: @cell_style)
+    cart_item['box'] && @boxes_ws.add_row(BOX_COLUMNS.map {|col| (col[:header]=="Box Location" && type==PATRON_TYPE)? BOX_LOCATION_PLACEHOLDER : col[:proc].call(cart_item['resource']['_resolved'],cart_item['series']['_resolved'],cart_item['box']['_resolved'])}.reject{|e| e==BOX_LOCATION_PLACEHOLDER}, style: @cell_style)
   end
 
 
@@ -289,8 +296,10 @@ class ComponentReport
   
   def self.item_ss_locations(item)
     container_instances = item['instances'].map{|inst| inst if inst['container']}.compact
+
     container_instances.map{|instance|
       container = instance['container'] ? instance['container'] : []
+
         (0..3).map {|i|
           container["type_#{i}"].titlecase + " " + container["indicator_#{i}"] if container["type_#{i}"]
         }.compact.join(", ")
